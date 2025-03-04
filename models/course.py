@@ -1,6 +1,6 @@
 from .timeslot import TimeSlot
 class Course:
-    def __init__(self, course_id, name, level, num_students, time_slots:TimeSlot):
+    def __init__(self, course_id, name, level, num_students, time_slots:list[TimeSlot]):
         """
         course_id: unique ID for the course
         name: e.g. "PHY 101"
