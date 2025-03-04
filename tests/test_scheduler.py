@@ -1,5 +1,4 @@
-from models import Course, TimeSlot, Room, Booking
-
+from . import Room, Course, TimeSlot, Booking
 
 def times_overlap(start1, end1, start2, end2):
     """
@@ -13,6 +12,7 @@ def find_free_room(rooms, bookings, course, timeslot):
     Returns the first room that fits the course's capacity and
     is free on timeslot.day between timeslot.start_time and timeslot.end_time.
     """
+    reason = None
     for room in rooms:
         # 1) Check capacity
         if room.capacity < course.num_students:
@@ -29,9 +29,10 @@ def find_free_room(rooms, bookings, course, timeslot):
                     break
 
         if not conflict_found:
-            return room
+            return room, reason
+    reason = "No room with enough capacity"
+    return None, reason # No free room found
 
-    return None  # No free room found
 
 def auto_schedule_courses(courses, rooms):
     bookings = []
@@ -40,7 +41,7 @@ def auto_schedule_courses(courses, rooms):
     for course in courses:
         for timeslot in course.time_slots:
             # Attempt to find a free room for this timeslot
-            free_room = find_free_room(rooms, bookings, course, timeslot)
+            free_room, reason = find_free_room(rooms, bookings, course, timeslot)
             if free_room:
                 # Create a booking
                 new_booking = Booking(
@@ -55,7 +56,7 @@ def auto_schedule_courses(courses, rooms):
                 booking_id_counter += 1
             else:
                 print(f"No available room found for {course.name} on {timeslot.day} "
-                      f"{timeslot.start_time}-{timeslot.end_time}")
+                      f"{timeslot.start_time}-{timeslot.end_time} beaseon: {reason}")
 
     return bookings
 
@@ -78,7 +79,7 @@ phy_101 = Course(
     course_id=101,
     name="PHY 101",
     level=100,
-    num_students=120,
+    num_students=1200,
     time_slots=course_101_time_slots
 )
 
