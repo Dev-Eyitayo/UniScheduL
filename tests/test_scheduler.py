@@ -12,7 +12,6 @@ def find_free_room(rooms, bookings, course, timeslot):
     Returns the first room that fits the course's capacity and
     is free on timeslot.day between timeslot.start_time and timeslot.end_time.
     """
-    reason = None
     for room in rooms:
         # 1) Check capacity
         if room.capacity < course.num_students:
@@ -29,12 +28,16 @@ def find_free_room(rooms, bookings, course, timeslot):
                     break
 
         if not conflict_found:
-            return room, reason
-    reason = "No room with enough capacity"
-    return None, reason # No free room found
+            return room, None
+    if all(room.capacity < course.num_students for room in rooms):
+        return None, "No room with enough capacity" # No free room found
+    else:
+        return None, "No Room because of Room conflict" # Room conflict
+
 
 
 def auto_schedule_courses(courses, rooms):
+    
     bookings = []
     booking_id_counter = 1
 
@@ -56,7 +59,7 @@ def auto_schedule_courses(courses, rooms):
                 booking_id_counter += 1
             else:
                 print(f"No available room found for {course.name} on {timeslot.day} "
-                      f"{timeslot.start_time}-{timeslot.end_time} beaseon: {reason}")
+                      f"{timeslot.start_time}-{timeslot.end_time} because: {reason}")
 
     return bookings
 
@@ -66,241 +69,88 @@ rooms = [
     Room(2, "Physics Lab 2", 100),
     Room(3, "Lecture Hall A", 150),
     Room(4, "Lecture Hall B", 200),
-    Room(5, "Lecture Theatre 1", 250)
+    Room(5, "Lecture Theatre 1", 250),
+    Room(6, "Physics Lab 3", 90),
+    Room(7, "Physics Lab 4", 70),
+    # Room(8, "Physics Seminar Room", 60),
+    # Room(9, "Physics Main Hall", 300),
+    # Room(10, "Physics Extension", 120)
 ]
 
 
-# Example data FOR 100 LEVEL COURSES
-course_101_time_slots = [
-    TimeSlot("Monday",    "08:00", "10:00"),  # M (8–10)
-    TimeSlot("Wednesday", "10:00", "12:00")   # W (10–12)
+courses_100 = [
+    Course(101, "PHY 101", 100, 120, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
+    Course(102, "PHY 102", 100, 90,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
+    Course(103, "PHY 103", 100, 60,  [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Friday", "08:00", "10:00")]),
+    Course(104, "PHY 104", 100, 80,  [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Thursday", "08:00", "10:00")]),
+    Course(105, "PHY 105", 100, 100, [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")]),
+    Course(106, "PHY 106", 100, 110, [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "15:00", "17:00")]),
+    Course(107, "PHY 107", 100, 50,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "13:00", "15:00")]),
+    Course(108, "PHY 108", 100, 120, [TimeSlot("Monday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
+    Course(109, "PHY 109", 100, 70,  [TimeSlot("Wednesday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
+    Course(110, "PHY 110", 100, 85,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")])
 ]
-phy_101 = Course(
-    course_id=101,
-    name="PHY 101",
-    level=100,
-    num_students=1200,
-    time_slots=course_101_time_slots
-)
 
-course_102_time_slots = [
-    TimeSlot("Tuesday",  "08:00", "10:00"),   # T (8–10)
-    TimeSlot("Thursday", "10:00", "12:00")    # Th (10–12)
+courses_200 = [
+    Course(201, "PHY 201", 200, 130, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")]),
+    Course(202, "PHY 202", 200, 95,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Friday", "08:00", "10:00")]),
+    Course(203, "PHY 203", 200, 85,  [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Thursday", "13:00", "15:00")]),
+    Course(204, "PHY 204", 200, 105, [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
+    Course(205, "PHY 205", 200, 90,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
+    Course(206, "PHY 206", 200, 115, [TimeSlot("Monday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
+    Course(207, "PHY 207", 200, 75,  [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
+    Course(208, "PHY 208", 200, 100, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
+    Course(209, "PHY 209", 200, 120, [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "13:00", "15:00")]),
+    Course(210, "PHY 210", 200, 110, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")])
 ]
-phy_102 = Course(
-    course_id=102,
-    name="PHY 102",
-    level=100,
-    num_students=90,
-    time_slots=course_102_time_slots
-)
-
-course_103_time_slots = [
-    TimeSlot("Monday",   "10:00", "12:00"),   # M (10–12)
-    TimeSlot("Friday",   "08:00", "10:00")    # F (8–10)
+courses_300 = [
+    Course(301, "PHY 301", 300, 75,  [TimeSlot("Monday", "08:00", "09:00"), TimeSlot("Wednesday", "08:00", "09:00")]),
+    Course(302, "PHY 302", 300, 90,  [TimeSlot("Monday", "09:00", "10:00"), TimeSlot("Wednesday", "09:00", "10:00")]),
+    Course(303, "PHY 303", 300, 85,  [TimeSlot("Tuesday", "08:00", "09:00"), TimeSlot("Thursday", "08:00", "09:00")]),
+    Course(304, "PHY 304", 300, 100, [TimeSlot("Tuesday", "09:00", "10:00"), TimeSlot("Thursday", "09:00", "10:00")]),
+    Course(305, "PHY 305", 300, 110, [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
+    Course(306, "PHY 306", 300, 120, [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Thursday", "13:00", "15:00")]),
+    Course(307, "PHY 307", 300, 95,  [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
+    Course(308, "PHY 308", 300, 80,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "10:00", "12:00")]),
+    Course(309, "PHY 309", 300, 70,  [TimeSlot("Wednesday", "10:00", "12:00"), TimeSlot("Friday", "10:00", "12:00")]),
+    Course(310, "PHY 310", 300, 120, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "08:00", "10:00")])
 ]
-phy_103 = Course(
-    course_id=103,
-    name="PHY 103",
-    level=100,
-    num_students=60,
-    time_slots=course_103_time_slots
-)
 
-course_104_time_slots = [
-    TimeSlot("Tuesday",   "13:00", "15:00"),  # T (13–15)
-    TimeSlot("Thursday",  "08:00", "10:00")   # Th (8–10)
+courses_400 = [
+    Course(401, "PHY 401 - Quantum Mechanics II", 400, 50,  
+           [TimeSlot("Tuesday", "13:00", "16:00"), TimeSlot("Thursday", "13:00", "16:00")]),
+
+    Course(402, "PHY 402 - Electromagnetic Waves", 400, 60,  
+           [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Wednesday", "13:00", "15:00")]),
+
+    Course(403, "PHY 403 - Statistical Mechanics", 400, 70,  
+           [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Friday", "08:00", "10:00")]),
+
+    Course(404, "PHY 404 - Solid State Physics", 400, 40,  
+           [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "10:00", "12:00")]),
+
+    Course(405, "PHY 405 - Nuclear Physics", 400, 55,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
+
+    Course(406, "PHY 406 - Advanced Thermodynamics", 400, 65,  
+           [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),
+
+    Course(407, "PHY 407 - Mathematical Physics III", 400, 50,  
+           [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "15:00", "17:00")]),
+
+    Course(408, "PHY 408 - Atomic and Molecular Physics", 400, 45,  
+           [TimeSlot("Tuesday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
+
+    Course(409, "PHY 409 - Plasma Physics", 400, 60,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
+
+    Course(410, "PHY 410 - Research Methodology in Physics", 400, 80,  
+           [TimeSlot("Friday", "08:00", "10:00"), TimeSlot("Friday", "13:00", "15:00")])
 ]
-phy_104 = Course(
-    course_id=104,
-    name="PHY 104",
-    level=100,
-    num_students=80,
-    time_slots=course_104_time_slots
-)
-
-
-# Example data FOR 200 LEVEL COURSES
-course_201_time_slots = [
-    TimeSlot("Monday",    "08:00", "10:00"),  # M (8–10)  (same as PHY 101 slot -> potential conflict)
-    TimeSlot("Friday",    "10:00", "12:00")   # F (10–12)
-]
-phy_201 = Course(
-    course_id=201,
-    name="PHY 201",
-    level=200,
-    num_students=120,
-    time_slots=course_201_time_slots
-)
-
-course_202_time_slots = [
-    TimeSlot("Tuesday",   "10:00", "12:00"),  # T (10–12)
-    TimeSlot("Friday",    "08:00", "10:00")   # F (8–10)  (same as PHY 103 slot -> potential conflict)
-]
-phy_202 = Course(
-    course_id=202,
-    name="PHY 202",
-    level=200,
-    num_students=100,
-    time_slots=course_202_time_slots
-)
-
-course_203_time_slots = [
-    TimeSlot("Wednesday", "08:00", "10:00"),  # W (8–10)
-    TimeSlot("Thursday",  "13:00", "15:00")   # Th (13–15)
-]
-phy_203 = Course(
-    course_id=203,
-    name="PHY 203",
-    level=200,
-    num_students=80,
-    time_slots=course_203_time_slots
-)
-
-course_204_time_slots = [
-    TimeSlot("Monday",    "13:00", "15:00"),  # M (13–15)
-    TimeSlot("Wednesday", "10:00", "12:00")   # W (10–12) (same as PHY 101 -> potential conflict)
-]
-phy_204 = Course(
-    course_id=204,
-    name="PHY 204",
-    level=200,
-    num_students=90,
-    time_slots=course_204_time_slots
-)
-
-
-
-# Example data FOR 300 LEVEL COURSES
-course_301_time_slots = [
-    TimeSlot("Monday",    "08:00", "09:00"),  # M (8–9)
-    TimeSlot("Wednesday", "08:00", "09:00")   # W (8–9)
-]
-phy_301 = Course(
-    course_id=301,
-    name="PHY 301",
-    level=300,
-    num_students=70,
-    time_slots=course_301_time_slots
-)
-
-course_302_time_slots = [
-    TimeSlot("Monday",    "09:00", "10:00"),  # M (9–10)
-    TimeSlot("Wednesday", "09:00", "10:00")   # W (9–10)
-]
-phy_302 = Course(
-    course_id=302,
-    name="PHY 302",
-    level=300,
-    num_students=70,
-    time_slots=course_302_time_slots
-)
-
-course_303_time_slots = [
-    TimeSlot("Tuesday",   "08:00", "09:00"),  # T (8–9)
-    TimeSlot("Thursday",  "08:00", "09:00")   # Th (8–9)
-]
-phy_303 = Course(
-    course_id=303,
-    name="PHY 303",
-    level=300,
-    num_students=75,
-    time_slots=course_303_time_slots
-)
-
-course_304_time_slots = [
-    TimeSlot("Tuesday",   "09:00", "10:00"),  # T (9–10)
-    TimeSlot("Thursday",  "09:00", "10:00")   # Th (9–10)
-]
-phy_304 = Course(
-    course_id=304,
-    name="PHY 304",
-    level=300,
-    num_students=100,
-    time_slots=course_304_time_slots
-)
-
-
-
-# Example data FOR 400 LEVEL COURSES
-course_401_time_slots = [
-    TimeSlot("Tuesday",   "13:00", "16:00"),  # T (13–16)
-    TimeSlot("Thursday",  "13:00", "16:00")   # Th (13–16)
-]
-phy_401 = Course(
-    course_id=401,
-    name="PHY 401",
-    level=400,
-    num_students=50,
-    time_slots=course_401_time_slots
-)
-
-course_402_time_slots = [
-    TimeSlot("Monday",    "10:00", "12:00"),  # M (10–12)
-    TimeSlot("Wednesday", "13:00", "15:00")   # W (13–15)
-]
-phy_402 = Course(
-    course_id=402,
-    name="PHY 402",
-    level=400,
-    num_students=60,
-    time_slots=course_402_time_slots
-)
-
-course_403_time_slots = [
-    TimeSlot("Wednesday", "08:00", "10:00"),  # W (8–10)
-    TimeSlot("Friday",    "08:00", "10:00")   # F (8–10)
-]
-phy_403 = Course(
-    course_id=403,
-    name="PHY 403",
-    level=400,
-    num_students=70,
-    time_slots=course_403_time_slots
-)
-
-course_404_time_slots = [
-    TimeSlot("Tuesday",   "10:00", "12:00"),  # T (10–12)
-    TimeSlot("Thursday",  "10:00", "12:00")   # Th (10–12)
-]
-phy_404 = Course(
-    course_id=404,
-    name="PHY 404",
-    level=400,
-    num_students=40,
-    time_slots=course_404_time_slots
-)
 
 
 # All courses
-courses = [
-    # 100-level
-    phy_101,
-    phy_102,
-    phy_103,
-    phy_104,
-
-    # 200-level
-    phy_201,
-    phy_202,
-    phy_203,
-    phy_204,
-
-    # 300-level
-    phy_301,
-    phy_302,
-    phy_303,
-    phy_304,
-
-    # 400-level
-    phy_401,
-    phy_402,
-    phy_403,
-    phy_404
-]
-
-
-
+courses = courses_100 + courses_200 + courses_300 + courses_400
 
 bookings = auto_schedule_courses(courses, rooms)
 
