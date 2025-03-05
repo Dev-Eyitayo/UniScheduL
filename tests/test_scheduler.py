@@ -38,36 +38,72 @@ def find_free_timeslot(bookings, day, course):
 
 def find_free_room(rooms, bookings, course, timeslot):
     """
-    Returns the first room that fits the course's capacity and
-    is free on timeslot.day between timeslot.start_time and timeslot.end_time.
+    Returns the first available room for the given course and timeslot.
+    If no room is found, it will return an alternative available time slot.
     """
     for room in rooms:
-        # 1) Check capacity
         if room.capacity < course.num_students:
-            continue
+            continue  # Skip rooms that are too small
 
-        # 2) Check existing bookings for conflicts
         conflict_found = False
         for b in bookings:
             if b.room.room_id == room.room_id and b.day == timeslot.day:
-                # same day, so check time
-                if times_overlap(timeslot.start_time, timeslot.end_time,
-                                 b.start_time, b.end_time):
+                if times_overlap(timeslot.start_time, timeslot.end_time, b.start_time, b.end_time):
                     conflict_found = True
-                    break
+                    break  # Stop checking if a conflict is found
 
         if not conflict_found:
-            return room, None
-    if all(room.capacity < course.num_students for room in rooms):
-        return None, "No room with enough capacity" # No free room found
-    else:
-        return None, "No Room because of Room conflict" # Room conflict
+            return room, None  # Found a suitable room
 
+    # If no room is available, return a signal to try another time
+    return None, "Room unavailable at this time"
+
+def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
+    """
+    Finds the next best available time slot for a course if the original time is full.
+    - First, try later slots on the same day.
+    - If no room is available on the same day, check another day.
+    """
+    from datetime import datetime, timedelta
+
+    # Define available time slots in 1-hour steps (assuming 8:00 AM to 6:00 PM working hours)
+    possible_times = ["08:00", "09:00", "10:00", "11:00", "12:00",
+                      "13:00", "14:00", "15:00", "16:00", "17:00"]
+
+    # Get the index of the original start time
+    if original_timeslot.start_time in possible_times:
+        start_index = possible_times.index(original_timeslot.start_time)
+    else:
+        return None  # If the time is outside the working hours, return failure
+
+    # Try later time slots on the same day
+    for new_start_time in possible_times[start_index + 1:]:
+        new_end_time = possible_times[start_index + 2] if start_index + 2 < len(possible_times) else "18:00"
+        new_timeslot = TimeSlot(original_timeslot.day, new_start_time, new_end_time)
+
+        room, reason = find_free_room(rooms, bookings, course, new_timeslot)
+        if room:
+            return room, new_timeslot  # Found a free room at a new time
+
+    # If no slot is available on the same day, try the next day in the week
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    current_day_index = week_days.index(original_timeslot.day)
+
+    for new_day in week_days[current_day_index + 1:]:
+        for new_start_time in possible_times:
+            new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
+            new_timeslot = TimeSlot(new_day, new_start_time, new_end_time)
+
+            room, reason = find_free_room(rooms, bookings, course, new_timeslot)
+            if room:
+                return room, new_timeslot  # Found a free room on another day
+
+    return None, None  # No alternative slots available
 
 
 def auto_schedule_courses(courses, rooms):
-    failed_bookings = []
     bookings = []
+    failed_bookings = []  # Store failed scheduling attempts
     booking_id_counter = 1
 
     for course in courses:
@@ -75,7 +111,7 @@ def auto_schedule_courses(courses, rooms):
             # Attempt to find a free room for this timeslot
             free_room, reason = find_free_room(rooms, bookings, course, timeslot)
             if free_room:
-                # Create a booking
+                # Schedule successfully
                 new_booking = Booking(
                     booking_id=booking_id_counter,
                     room=free_room,
@@ -87,9 +123,24 @@ def auto_schedule_courses(courses, rooms):
                 bookings.append(new_booking)
                 booking_id_counter += 1
             else:
-                failed_bookings.append(
-                    f"No available room found for {course.name} on {timeslot.day} from {timeslot.start_time}-{timeslot.end_time} because: {reason}"
-            )
+                # Try to find an alternative time slot
+                alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
+                if alt_room:
+                    # Successfully found a new slot
+                    new_booking = Booking(
+                        booking_id=booking_id_counter,
+                        room=alt_room,
+                        course=course,
+                        day=alt_timeslot.day,
+                        start_time=alt_timeslot.start_time,
+                        end_time=alt_timeslot.end_time
+                    )
+                    bookings.append(new_booking)
+                    booking_id_counter += 1
+                    print(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time}")
+                else:
+                    # If no alternative time was found, log failure
+                    failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed. No available time slots.")
 
     return bookings, failed_bookings
 
