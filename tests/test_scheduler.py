@@ -37,7 +37,7 @@ def find_free_room(rooms, bookings, course, timeslot):
 
 
 def auto_schedule_courses(courses, rooms):
-    
+    failed_bookings = []
     bookings = []
     booking_id_counter = 1
 
@@ -58,10 +58,11 @@ def auto_schedule_courses(courses, rooms):
                 bookings.append(new_booking)
                 booking_id_counter += 1
             else:
-                print(f"No available room found for {course.name} on {timeslot.day} "
-                      f"{timeslot.start_time}-{timeslot.end_time} because: {reason}")
+                failed_bookings.append(
+                    f"No available room found for {course.name} on {timeslot.day} from {timeslot.start_time}-{timeslot.end_time} because: {reason}"
+            )
 
-    return bookings
+    return bookings, failed_bookings
 
 # Example data
 rooms = [
@@ -152,7 +153,27 @@ courses_400 = [
 # All courses
 courses = courses_100 + courses_200 + courses_300 + courses_400
 
-bookings = auto_schedule_courses(courses, rooms)
+bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
-for b in bookings:
-    print(f"Booking {b.booking_id}: {b.course.name} -> {b.room.name} on {b.day} {b.start_time}-{b.end_time}")
+def print_schedule(bookings, failed_bookings):
+    # Sort bookings by day and start time
+    bookings.sort(key=lambda b: (b.day, b.start_time))
+
+    print("\n📅 **Final Room Schedule**\n")
+    current_day = None
+    for booking in bookings:
+        if booking.day != current_day:
+            print(f"\n🗓 **{booking.day}**\n" + "-" * 30)
+            current_day = booking.day
+        print(f"📌 {booking.start_time} - {booking.end_time}: {booking.course.name} [{booking.course.level} Level] -> {booking.room.name} (Capacity: {booking.room.capacity})")
+
+    if failed_bookings:
+        print("\n🚨 **Failed Scheduling Attempts**\n" + "-" * 30)
+        for failure in failed_bookings:
+            print(f"❌ {failure}")
+
+# Run the scheduling function
+bookings, failed_bookings = auto_schedule_courses(courses, rooms)
+
+# Display formatted output
+print_schedule(bookings, failed_bookings)
