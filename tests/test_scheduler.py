@@ -7,6 +7,35 @@ def times_overlap(start1, end1, start2, end2):
     # Simplistic string comparison method if they're zero-padded HH:MM:
     return not (end1 <= start2 or start1 >= end2)
 
+# def find_free_timeslot(bookings, day, course):
+#     """
+#     Returns the first timeslot on day that doesn't overlap with any existing bookings.
+#     """
+#     for timeslot in course.time_slots:
+#         conflict_found = False
+#         for b in bookings:
+#             if b.day == day and times_overlap(timeslot.start_time, timeslot.end_time, b.start_time, b.end_time):
+#                 conflict_found = True
+#                 break
+#         if not conflict_found:
+#             return timeslot, None
+#     return None, "No free timeslot found"
+
+def find_free_timeslot(bookings, day, course):
+    """
+    Returns the first timeslot on day that doesn't overlap with any existing bookings.
+    """
+    conflit_found = False
+    for timeslot in course.time_slots:
+        for b in bookings:
+            if b.day ==day and times_overlap(timeslot.start_time, timeslot.end_time, b.start_time, b.end_time):
+                conflict_found = True
+                break
+        if not conflict_found:
+            return timeslot, None
+    return None, "No free timeslot found"
+
+
 def find_free_room(rooms, bookings, course, timeslot):
     """
     Returns the first room that fits the course's capacity and
@@ -68,8 +97,8 @@ def auto_schedule_courses(courses, rooms):
 rooms = [
     Room(1, "Physics Lab 1", 80),
     Room(2, "Physics Lab 2", 100),
-    Room(3, "Lecture Hall A", 150),
-    Room(4, "Lecture Hall B", 200),
+    Room(3, "Lecture Hall 12", 150),
+    Room(4, "Lecture Hall 13", 200),
     Room(5, "Lecture Theatre 1", 250),
     Room(6, "Physics Lab 3", 90),
     Room(7, "Physics Lab 4", 70),
@@ -156,9 +185,12 @@ courses = courses_100 + courses_200 + courses_300 + courses_400
 bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
 def print_schedule(bookings, failed_bookings):
-    # Sort bookings by day and start time
-    bookings.sort(key=lambda b: (b.day, b.start_time))
 
+    orders = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+    # Sort bookings by day and start time
+    bookings.sort(key=lambda b: (orders.index(b.day), b.start_time))
+    
     print("\n📅 **Final Room Schedule**\n")
     current_day = None
     for booking in bookings:
