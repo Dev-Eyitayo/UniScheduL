@@ -13,8 +13,10 @@ def find_free_room(rooms, bookings, course, timeslot):
     Returns the first available room for the given course and timeslot.
     If no room is found, it will return an alternative available time slot.
     """
+    
     for room in rooms:
         if room.capacity < course.num_students:
+            reason = "Room too small for the class"
             continue  # Skip rooms that are too small
 
         conflict_found = False
@@ -26,7 +28,9 @@ def find_free_room(rooms, bookings, course, timeslot):
 
         if not conflict_found:
             return room, None  # Found a suitable room
-
+        
+    if reason:
+        return None, reason  # No room available due to size constraints
     # If no room is available, return a signal to try another time
     return None, "Room unavailable at this time"
 
@@ -121,100 +125,12 @@ def auto_schedule_courses(courses, rooms):
                     print(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time}")
                 else:
                     # If no alternative time was found, log failure
-                    failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed. No available time slots.")
+                    failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to {reason}")
 
     return bookings, failed_bookings
 
-# Example data
-rooms = [
-    Room(1, "Physics Lab 1", 80),
-    Room(2, "Physics Lab 2", 100),
-    Room(3, "Lecture Hall 12", 150),
-    Room(4, "Lecture Hall 13", 200),
-    Room(5, "Lecture Theatre 1", 250),
-    Room(6, "Physics Lab 3", 90),
-    Room(7, "Physics Lab 4", 70),
-    # Room(8, "Physics Seminar Room", 60),
-    # Room(9, "Physics Main Hall", 300),
-    # Room(10, "Physics Extension", 120)
-]
 
-
-courses_100 = [
-    Course(101, "PHY 101", 100, 120, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
-    Course(102, "PHY 102", 100, 90,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
-    Course(103, "PHY 103", 100, 60,  [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Friday", "08:00", "10:00")]),
-    Course(104, "PHY 104", 100, 80,  [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Thursday", "08:00", "10:00")]),
-    Course(105, "PHY 105", 100, 100, [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")]),
-    Course(106, "PHY 106", 100, 110, [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "15:00", "17:00")]),
-    Course(107, "PHY 107", 100, 50,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "13:00", "15:00")]),
-    Course(108, "PHY 108", 100, 120, [TimeSlot("Monday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
-    Course(109, "PHY 109", 100, 70,  [TimeSlot("Wednesday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
-    Course(110, "PHY 110", 100, 85,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")])
-]
-
-courses_200 = [
-    Course(201, "PHY 201", 200, 130, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")]),
-    Course(202, "PHY 202", 200, 95,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Friday", "08:00", "10:00")]),
-    Course(203, "PHY 203", 200, 85,  [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Thursday", "13:00", "15:00")]),
-    Course(204, "PHY 204", 200, 105, [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
-    Course(205, "PHY 205", 200, 90,  [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
-    Course(206, "PHY 206", 200, 115, [TimeSlot("Monday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
-    Course(207, "PHY 207", 200, 75,  [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
-    Course(208, "PHY 208", 200, 100, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
-    Course(209, "PHY 209", 200, 120, [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "13:00", "15:00")]),
-    Course(210, "PHY 210", 200, 110, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Friday", "10:00", "12:00")])
-]
-courses_300 = [
-    Course(301, "PHY 301", 300, 75,  [TimeSlot("Monday", "08:00", "09:00"), TimeSlot("Wednesday", "08:00", "09:00")]),
-    Course(302, "PHY 302", 300, 90,  [TimeSlot("Monday", "09:00", "10:00"), TimeSlot("Wednesday", "09:00", "10:00")]),
-    Course(303, "PHY 303", 300, 85,  [TimeSlot("Tuesday", "08:00", "09:00"), TimeSlot("Thursday", "08:00", "09:00")]),
-    Course(304, "PHY 304", 300, 100, [TimeSlot("Tuesday", "09:00", "10:00"), TimeSlot("Thursday", "09:00", "10:00")]),
-    Course(305, "PHY 305", 300, 110, [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
-    Course(306, "PHY 306", 300, 120, [TimeSlot("Tuesday", "13:00", "15:00"), TimeSlot("Thursday", "13:00", "15:00")]),
-    Course(307, "PHY 307", 300, 95,  [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Friday", "08:00", "10:00")]),
-    Course(308, "PHY 308", 300, 80,  [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "10:00", "12:00")]),
-    Course(309, "PHY 309", 300, 70,  [TimeSlot("Wednesday", "10:00", "12:00"), TimeSlot("Friday", "10:00", "12:00")]),
-    Course(310, "PHY 310", 300, 120, [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "08:00", "10:00")])
-]
-
-courses_400 = [
-    Course(401, "PHY 401 - Quantum Mechanics II", 400, 50,  
-           [TimeSlot("Tuesday", "13:00", "16:00"), TimeSlot("Thursday", "13:00", "16:00")]),
-
-    Course(402, "PHY 402 - Electromagnetic Waves", 400, 60,  
-           [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Wednesday", "13:00", "15:00")]),
-
-    Course(403, "PHY 403 - Statistical Mechanics", 400, 70,  
-           [TimeSlot("Wednesday", "08:00", "10:00"), TimeSlot("Friday", "08:00", "10:00")]),
-
-    Course(404, "PHY 404 - Solid State Physics", 400, 40,  
-           [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "10:00", "12:00")]),
-
-    Course(405, "PHY 405 - Nuclear Physics", 400, 55,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "10:00", "12:00")]),
-
-    Course(406, "PHY 406 - Advanced Thermodynamics", 400, 65,  
-           [TimeSlot("Tuesday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),
-
-    Course(407, "PHY 407 - Mathematical Physics III", 400, 50,  
-           [TimeSlot("Monday", "13:00", "15:00"), TimeSlot("Wednesday", "15:00", "17:00")]),
-
-    Course(408, "PHY 408 - Atomic and Molecular Physics", 400, 45,  
-           [TimeSlot("Tuesday", "15:00", "17:00"), TimeSlot("Thursday", "15:00", "17:00")]),
-
-    Course(409, "PHY 409 - Plasma Physics", 400, 60,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "10:00", "12:00")]),
-
-    Course(410, "PHY 410 - Research Methodology in Physics", 400, 80,  
-           [TimeSlot("Friday", "08:00", "10:00"), TimeSlot("Friday", "13:00", "15:00")])
-]
-
-
-# All courses
-courses = courses_100 + courses_200 + courses_300 + courses_400
-
-bookings, failed_bookings = auto_schedule_courses(courses, rooms)
+# bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
 def print_schedule(bookings, failed_bookings):
 
@@ -229,15 +145,90 @@ def print_schedule(bookings, failed_bookings):
         if booking.day != current_day:
             print(f"\n🗓 **{booking.day}**\n" + "-" * 30)
             current_day = booking.day
-        print(f"📌 {booking.start_time} - {booking.end_time}: {booking.course.name} [{booking.course.level} Level] -> {booking.room.name} (Capacity: {booking.room.capacity})")
+        print(f"📌 {booking.start_time} - {booking.end_time}: {booking.course.name} [{booking.course.level} Level, Class Size: {booking.course.num_students}] -> {booking.room.name} (Capacity: {booking.room.capacity})")
 
     if failed_bookings:
         print("\n🚨 **Failed Scheduling Attempts**\n" + "-" * 30)
         for failure in failed_bookings:
             print(f"❌ {failure}")
 
-# Run the scheduling function
-bookings, failed_bookings = auto_schedule_courses(courses, rooms)
+# # Run the scheduling function
+# bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
-# Display formatted output
+# # Display formatted output
+# print_schedule(bookings, failed_bookings)
+
+
+# Extreme test cases for scheduling algorithm stress testing
+
+rooms = [
+    Room(1, "Physics Lab 1", 80),
+    Room(2, "Physics Lab 2", 100),
+    Room(3, "Lecture Hall A", 150),
+    Room(4, "Lecture Hall B", 200),
+    Room(5, "Physics Seminar Room", 50),
+]
+
+# 1️⃣ Large classes that exceed room capacity
+courses_extreme = [
+    Course(501, "PHY 501 - Advanced Quantum Physics", 500, 400,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
+    Course(502, "PHY 502 - Theoretical Mechanics", 500, 200,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
+    Course(503, "PHY 503 - Electromagnetic Theory", 500, 180,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
+    Course(504, "PHY 504 - Computational Physics", 500, 190,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
+    Course(505, "PHY 505 - Advanced Optics",500, 300,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
+]
+
+# A fully packed day
+courses_filled_day = [
+    Course(601, "PHY 601 - Relativity", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+    Course(602, "PHY 602 - Plasma Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+    Course(603, "PHY 603 - Experimental Techniques", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+    Course(604, "PHY 604 - Biophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+    Course(605, "PHY 605 - Nuclear Astrophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+    Course(606, "PHY 606 - Particle Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
+]
+
+# No available gaps for rescheduling
+courses_no_gaps = [
+    Course(701, "PHY 701 - High Energy Physics", 700, 150, [TimeSlot("Wednesday", "08:00", "10:00")]),  
+    Course(702, "PHY 702 - Fluid Mechanics", 700, 150, [TimeSlot("Wednesday", "10:00", "12:00")]),  
+    Course(703, "PHY 703 - Statistical Thermodynamics", 700, 150, [TimeSlot("Wednesday", "12:00", "14:00")]),  
+    Course(704, "PHY 704 - Condensed Matter Physics", 700, 150, [TimeSlot("Wednesday", "14:00", "16:00")]),  
+    Course(705, "PHY 705 - Quantum Field Theory", 700, 150, [TimeSlot("Wednesday", "16:00", "18:00")]),  
+]
+
+# Courses that need special rooms
+courses_special_rooms = [
+    Course(801, "PHY 801 - Advanced Experimental Physics", 800, 80,  
+           [TimeSlot("Thursday", "08:00", "10:00")]),  
+    Course(802, "PHY 802 - Laser Optics", 800, 60,  
+           [TimeSlot("Thursday", "10:00", "12:00")]),  
+]
+
+rooms_specialized = [
+    Room(6, "General Lecture Hall", 200),
+    Room(7, "Physics Lab", 100),  # Only one physics lab!
+]
+
+# Exams requiring large space and happening at the same time
+courses_exams = [
+    Course(901, "PHY 901 - Research Methods", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
+    Course(902, "PHY 902 - Computational Fluid Dynamics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
+    Course(903, "PHY 903 - Atomic Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
+    Course(904, "PHY 904 - Statistical Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
+]
+
+# Combine all test cases
+courses_extreme_cases = courses_extreme + courses_filled_day + courses_no_gaps + courses_special_rooms + courses_exams
+
+# Run the scheduler with extreme cases
+bookings, failed_bookings = auto_schedule_courses(courses_extreme_cases, rooms)
+
+# Print results
 print_schedule(bookings, failed_bookings)
+
