@@ -16,7 +16,6 @@ def find_free_room(rooms, bookings, course, timeslot):
     
     for room in rooms:
         if room.capacity < course.num_students:
-            reason = "Room too small for the class"
             continue  # Skip rooms that are too small
 
         conflict_found = False
@@ -29,9 +28,8 @@ def find_free_room(rooms, bookings, course, timeslot):
         if not conflict_found:
             return room, None  # Found a suitable room
         
-    if reason:
-        return None, reason  # No room available due to size constraints
-    # If no room is available, return a signal to try another time
+    if any(room.capacity < course.num_students for room in rooms):
+        return None, "Room unavailable at this time"
     return None, "Room unavailable at this time"
 
 def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
@@ -122,7 +120,7 @@ def auto_schedule_courses(courses, rooms):
                     )
                     bookings.append(new_booking)
                     booking_id_counter += 1
-                    print(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time}")
+                    print(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
                 else:
                     # If no alternative time was found, log failure
                     failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to {reason}")
