@@ -7,34 +7,6 @@ def times_overlap(start1, end1, start2, end2):
     # Simplistic string comparison method if they're zero-padded HH:MM:
     return not (end1 <= start2 or start1 >= end2)
 
-# def find_free_timeslot(bookings, day, course):
-#     """
-#     Returns the first timeslot on day that doesn't overlap with any existing bookings.
-#     """
-#     for timeslot in course.time_slots:
-#         conflict_found = False
-#         for b in bookings:
-#             if b.day == day and times_overlap(timeslot.start_time, timeslot.end_time, b.start_time, b.end_time):
-#                 conflict_found = True
-#                 break
-#         if not conflict_found:
-#             return timeslot, None
-#     return None, "No free timeslot found"
-
-def find_free_timeslot(bookings, day, course):
-    """
-    Returns the first timeslot on day that doesn't overlap with any existing bookings.
-    """
-    conflit_found = False
-    for timeslot in course.time_slots:
-        for b in bookings:
-            if b.day ==day and times_overlap(timeslot.start_time, timeslot.end_time, b.start_time, b.end_time):
-                conflict_found = True
-                break
-        if not conflict_found:
-            return timeslot, None
-    return None, "No free timeslot found"
-
 
 def find_free_room(rooms, bookings, course, timeslot):
     """
@@ -61,12 +33,12 @@ def find_free_room(rooms, bookings, course, timeslot):
 def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
     """
     Finds the next best available time slot for a course if the original time is full.
-    - First, try later slots on the same day.
+    - First, try **earlier slots** on the same day.
+    - Then, try **later slots** on the same day.
     - If no room is available on the same day, check another day.
     """
-    from datetime import datetime, timedelta
-
-    # Define available time slots in 1-hour steps (assuming 8:00 AM to 6:00 PM working hours)
+    
+    # Define available time slots (assuming 8:00 AM to 6:00 PM working hours)
     possible_times = ["08:00", "09:00", "10:00", "11:00", "12:00",
                       "13:00", "14:00", "15:00", "16:00", "17:00"]
 
@@ -74,22 +46,31 @@ def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
     if original_timeslot.start_time in possible_times:
         start_index = possible_times.index(original_timeslot.start_time)
     else:
-        return None  # If the time is outside the working hours, return failure
+        return None, None  # If the time is outside working hours, return failure
 
-    # Try later time slots on the same day
-    for new_start_time in possible_times[start_index + 1:]:
-        new_end_time = possible_times[start_index + 2] if start_index + 2 < len(possible_times) else "18:00"
+    # Try earlier time slots on the same day
+    for new_start_time in reversed(possible_times[:start_index]):
+        new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
         new_timeslot = TimeSlot(original_timeslot.day, new_start_time, new_end_time)
 
         room, reason = find_free_room(rooms, bookings, course, new_timeslot)
         if room:
-            return room, new_timeslot  # Found a free room at a new time
+            return room, new_timeslot  # Found a free room at an earlier time
 
-    # If no slot is available on the same day, try the next day in the week
+    # Try later time slots on the same day
+    for new_start_time in possible_times[start_index + 1:]:
+        new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
+        new_timeslot = TimeSlot(original_timeslot.day, new_start_time, new_end_time)
+
+        room, reason = find_free_room(rooms, bookings, course, new_timeslot)
+        if room:
+            return room, new_timeslot  # Found a free room at a later time
+
+    # If no slot is available on the same day, try another day
     week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     current_day_index = week_days.index(original_timeslot.day)
 
-    for new_day in week_days[current_day_index + 1:]:
+    for new_day in week_days[current_day_index + 1:] + week_days[:current_day_index]:  # Search next and previous days
         for new_start_time in possible_times:
             new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
             new_timeslot = TimeSlot(new_day, new_start_time, new_end_time)
