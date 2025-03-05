@@ -29,7 +29,7 @@ def find_free_room(rooms, bookings, course, timeslot):
             return room, None  # Found a suitable room
         
     if any(room.capacity < course.num_students for room in rooms):
-        return None, "Room unavailable at this time"
+        return None, "No room that can support the required capacity"  # No room is available
     return None, "Room unavailable at this time"
 
 def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
@@ -83,6 +83,17 @@ def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
 
     return None, None  # No alternative slots available
 
+def is_lecturer_available(lecturer_id, bookings, day, start_time, end_time):
+    """
+    Checks if a lecturer is already assigned to another class at the same time.
+    Returns True if available, False if they are already teaching another course.
+    """
+    for booking in bookings:
+        if booking.course.lecturer_id == lecturer_id and booking.day == day:
+            if times_overlap(booking.start_time, booking.end_time, start_time, end_time):
+                return False  # Conflict found
+    return True  # Lecturer is available
+
 
 def auto_schedule_courses(courses, rooms):
     bookings = []
@@ -91,6 +102,11 @@ def auto_schedule_courses(courses, rooms):
 
     for course in courses:
         for timeslot in course.time_slots:
+            # Check if the lecturer is available
+            if not is_lecturer_available(course.lecturer_id, bookings, timeslot.day, timeslot.start_time, timeslot.end_time):
+                failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to Lecturer conflict")
+                continue  # Skip this slot
+
             # Attempt to find a free room for this timeslot
             free_room, reason = find_free_room(rooms, bookings, course, timeslot)
             if free_room:
@@ -108,8 +124,8 @@ def auto_schedule_courses(courses, rooms):
             else:
                 # Try to find an alternative time slot
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
-                if alt_room:
-                    # Successfully found a new slot
+                if alt_room and is_lecturer_available(course.lecturer_id, bookings, alt_timeslot.day, alt_timeslot.start_time, alt_timeslot.end_time):
+                    # Successfully found a new slot with an available lecturer
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,
@@ -127,8 +143,6 @@ def auto_schedule_courses(courses, rooms):
 
     return bookings, failed_bookings
 
-
-# bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
 def print_schedule(bookings, failed_bookings):
 
@@ -150,11 +164,10 @@ def print_schedule(bookings, failed_bookings):
         for failure in failed_bookings:
             print(f"❌ {failure}")
 
-# # Run the scheduling function
-# bookings, failed_bookings = auto_schedule_courses(courses, rooms)
 
-# # Display formatted output
-# print_schedule(bookings, failed_bookings)
+
+
+
 
 
 # Extreme test cases for scheduling algorithm stress testing
@@ -165,68 +178,69 @@ rooms = [
     Room(3, "Lecture Hall A", 150),
     Room(4, "Lecture Hall B", 200),
     Room(5, "Physics Seminar Room", 50),
-]
-
-# 1️⃣ Large classes that exceed room capacity
-courses_extreme = [
-    Course(501, "PHY 501 - Advanced Quantum Physics", 500, 400,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
-    Course(502, "PHY 502 - Theoretical Mechanics", 500, 200,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
-    Course(503, "PHY 503 - Electromagnetic Theory", 500, 180,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
-    Course(504, "PHY 504 - Computational Physics", 500, 190,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
-    Course(505, "PHY 505 - Advanced Optics",500, 300,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")]),  
-]
-
-# A fully packed day
-courses_filled_day = [
-    Course(601, "PHY 601 - Relativity", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-    Course(602, "PHY 602 - Plasma Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-    Course(603, "PHY 603 - Experimental Techniques", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-    Course(604, "PHY 604 - Biophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-    Course(605, "PHY 605 - Nuclear Astrophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-    Course(606, "PHY 606 - Particle Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")]),  
-]
-
-# No available gaps for rescheduling
-courses_no_gaps = [
-    Course(701, "PHY 701 - High Energy Physics", 700, 150, [TimeSlot("Wednesday", "08:00", "10:00")]),  
-    Course(702, "PHY 702 - Fluid Mechanics", 700, 150, [TimeSlot("Wednesday", "10:00", "12:00")]),  
-    Course(703, "PHY 703 - Statistical Thermodynamics", 700, 150, [TimeSlot("Wednesday", "12:00", "14:00")]),  
-    Course(704, "PHY 704 - Condensed Matter Physics", 700, 150, [TimeSlot("Wednesday", "14:00", "16:00")]),  
-    Course(705, "PHY 705 - Quantum Field Theory", 700, 150, [TimeSlot("Wednesday", "16:00", "18:00")]),  
-]
-
-# Courses that need special rooms
-courses_special_rooms = [
-    Course(801, "PHY 801 - Advanced Experimental Physics", 800, 80,  
-           [TimeSlot("Thursday", "08:00", "10:00")]),  
-    Course(802, "PHY 802 - Laser Optics", 800, 60,  
-           [TimeSlot("Thursday", "10:00", "12:00")]),  
-]
-
-rooms_specialized = [
     Room(6, "General Lecture Hall", 200),
     Room(7, "Physics Lab", 100),  # Only one physics lab!
+    Room(8, "Main Auditorium", 300),
 ]
 
-# Exams requiring large space and happening at the same time
-courses_exams = [
-    Course(901, "PHY 901 - Research Methods", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
-    Course(902, "PHY 902 - Computational Fluid Dynamics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
-    Course(903, "PHY 903 - Atomic Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
-    Course(904, "PHY 904 - Statistical Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")]),  
+# 1️⃣ Large classes that exceed room capacity (should be split across multiple rooms)
+courses_extreme = [
+    Course(501, "PHY 501 - Advanced Quantum Physics", 500, 900,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=1),  
+    Course(502, "PHY 502 - Theoretical Mechanics", 500, 200,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=2),  
+    Course(503, "PHY 503 - Electromagnetic Theory", 500, 180,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=3),  
+    Course(504, "PHY 504 - Computational Physics", 500, 190,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=4),  
+    Course(505, "PHY 505 - Advanced Optics", 500, 300,  
+           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=5),  
 ]
+
+# 2️⃣ A fully packed day (should force rescheduling to other time slots)
+courses_filled_day = [
+    Course(601, "PHY 601 - Relativity", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=6),  
+    Course(602, "PHY 602 - Plasma Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=7),  
+    Course(603, "PHY 603 - Experimental Techniques", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=8),  
+    Course(604, "PHY 604 - Biophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=9),  
+    Course(605, "PHY 605 - Nuclear Astrophysics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=10),  
+    Course(606, "PHY 606 - Particle Physics", 600, 100, [TimeSlot("Tuesday", "08:00", "10:00")], lecturer_id=1),  
+]
+
+# 3️⃣ No available gaps for rescheduling (tests ultimate time slot optimization)
+courses_no_gaps = [
+    Course(701, "PHY 701 - High Energy Physics", 700, 150, [TimeSlot("Wednesday", "08:00", "10:00")], lecturer_id=2),  
+    Course(702, "PHY 702 - Fluid Mechanics", 700, 150, [TimeSlot("Wednesday", "10:00", "12:00")], lecturer_id=3),  
+    Course(703, "PHY 703 - Statistical Thermodynamics", 700, 150, [TimeSlot("Wednesday", "12:00", "14:00")], lecturer_id=4),  
+    Course(704, "PHY 704 - Condensed Matter Physics", 700, 150, [TimeSlot("Wednesday", "14:00", "16:00")], lecturer_id=5),  
+    Course(705, "PHY 705 - Quantum Field Theory", 700, 150, [TimeSlot("Wednesday", "16:00", "18:00")], lecturer_id=6),  
+]
+
+# 4️⃣ Courses that need special rooms (Physics Lab should be prioritized)
+courses_special_rooms = [
+    Course(801, "PHY 801 - Advanced Experimental Physics", 800, 80,  
+           [TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=7),  
+    Course(802, "PHY 802 - Laser Optics", 800, 60,  
+           [TimeSlot("Thursday", "10:00", "12:00")], lecturer_id=8),  
+]
+
+# 5️⃣ Exams requiring large space and happening at the same time (must be distributed across available rooms)
+courses_exams = [
+    Course(901, "PHY 901 - Research Methods", 900, 100, [TimeSlot("Friday", "08:00", "10:00")], lecturer_id=9),  
+    Course(902, "PHY 902 - Computational Fluid Dynamics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")], lecturer_id=10),  
+    Course(903, "PHY 903 - Atomic Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")], lecturer_id=1),  
+    Course(904, "PHY 904 - Statistical Physics", 900, 100, [TimeSlot("Friday", "08:00", "10:00")], lecturer_id=2),  
+]
+
+
 
 # Combine all test cases
-courses_extreme_cases = courses_extreme + courses_filled_day + courses_no_gaps + courses_special_rooms + courses_exams
+courses_massive = courses_extreme + courses_filled_day + courses_no_gaps + courses_special_rooms + courses_exams
 
-# Run the scheduler with extreme cases
-bookings, failed_bookings = auto_schedule_courses(courses_extreme_cases, rooms)
+# Run the scheduler with updated massive dataset
+bookings, failed_bookings = auto_schedule_courses(courses_massive, rooms)
 
 # Print results
 print_schedule(bookings, failed_bookings)
+
 
