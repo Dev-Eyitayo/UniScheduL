@@ -29,59 +29,82 @@ def find_free_room(rooms, bookings, course, timeslot):
             return room, None  # Found a suitable room
         
     if all(room.capacity < course.num_students for room in rooms):
-        return None, f"No room that can support the required capacity {room.capacity}, {[room.capacity for room in rooms]}"  # No room is available
-    return None, "Room unavailable at this time"
+        return None, f"No room that can support the required capacity of {course.num_students}. Largest room available: {max(room.capacity for room in rooms)}"  # No room is available
+    return None, f"No room unavailable on {timeslot.day} at ({timeslot.start_time} - {timeslot.end_time})"
 
 def find_next_available_time_slot(course, rooms, bookings, original_timeslot):
     """
-    Finds the next best available time slot for a course if the original time is full.
-    - First, try **earlier slots** on the same day.
-    - Then, try **later slots** on the same day.
-    - If no room is available on the same day, check another day.
+    Finds the **best possible** alternative time slot for a course when its original time slot is full.
+    Prioritizes:
+    - **Same day earlier slots**
+    - **Same day later slots**
+    - **Next best available day**
+    Ensures:
+    - **Least number of conflicts**
+    - **Lecturer is available**
+    - **A suitable room is available**
     """
-    
-    # Define available time slots (assuming 8:00 AM to 6:00 PM working hours)
+
     possible_times = ["08:00", "09:00", "10:00", "11:00", "12:00",
                       "13:00", "14:00", "15:00", "16:00", "17:00"]
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-    # Get the index of the original start time
-    if original_timeslot.start_time in possible_times:
-        start_index = possible_times.index(original_timeslot.start_time)
-    else:
-        return None, None  # If the time is outside working hours, return failure
+    # Get the index of the current time and day
+    start_index = possible_times.index(original_timeslot.start_time)
+    current_day_index = week_days.index(original_timeslot.day)
 
-    # Try earlier time slots on the same day
+    # **Store potential slots with their conflict count**
+    best_slot = None
+    best_room = None
+    min_conflicts = float("inf")
+
+    # **Step 1: Check same day earlier slots**
     for new_start_time in reversed(possible_times[:start_index]):
         new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
         new_timeslot = TimeSlot(original_timeslot.day, new_start_time, new_end_time)
 
+        # Find room + check lecturer availability
         room, reason = find_free_room(rooms, bookings, course, new_timeslot)
-        if room:
-            return room, new_timeslot  # Found a free room at an earlier time
+        conflicts = sum(1 for b in bookings if b.day == original_timeslot.day and b.start_time == new_start_time)
 
-    # Try later time slots on the same day
+        if room and is_lecturer_available(course.lecturer_id, bookings, original_timeslot.day, new_start_time, new_end_time):
+            if conflicts < min_conflicts:  # Pick the slot with the fewest conflicts
+                min_conflicts = conflicts
+                best_slot = new_timeslot
+                best_room = room
+
+    # **Step 2: Check same day later slots**
     for new_start_time in possible_times[start_index + 1:]:
         new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
         new_timeslot = TimeSlot(original_timeslot.day, new_start_time, new_end_time)
 
+        # Find room + check lecturer availability
         room, reason = find_free_room(rooms, bookings, course, new_timeslot)
-        if room:
-            return room, new_timeslot  # Found a free room at a later time
+        conflicts = sum(1 for b in bookings if b.day == original_timeslot.day and b.start_time == new_start_time)
 
-    # If no slot is available on the same day, try another day
-    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    current_day_index = week_days.index(original_timeslot.day)
+        if room and is_lecturer_available(course.lecturer_id, bookings, original_timeslot.day, new_start_time, new_end_time):
+            if conflicts < min_conflicts:
+                min_conflicts = conflicts
+                best_slot = new_timeslot
+                best_room = room
 
-    for new_day in week_days[current_day_index + 1:] + week_days[:current_day_index]:  # Search next and previous days
+    # **Step 3: If no slots on the same day, check other days**
+    for new_day in week_days[current_day_index + 1:] + week_days[:current_day_index]:
         for new_start_time in possible_times:
             new_end_time = possible_times[possible_times.index(new_start_time) + 2] if possible_times.index(new_start_time) + 2 < len(possible_times) else "18:00"
             new_timeslot = TimeSlot(new_day, new_start_time, new_end_time)
 
+            # Find room + check lecturer availability
             room, reason = find_free_room(rooms, bookings, course, new_timeslot)
-            if room:
-                return room, new_timeslot  # Found a free room on another day
+            conflicts = sum(1 for b in bookings if b.day == new_day and b.start_time == new_start_time)
 
-    return None, None  # No alternative slots available
+            if room and is_lecturer_available(course.lecturer_id, bookings, new_day, new_start_time, new_end_time):
+                if conflicts < min_conflicts:
+                    min_conflicts = conflicts
+                    best_slot = new_timeslot
+                    best_room = room
+
+    return best_room, best_slot  # Returns the best available time slot
 
 def is_lecturer_available(lecturer_id, bookings, day, start_time, end_time):
     """
@@ -102,15 +125,33 @@ def auto_schedule_courses(courses, rooms):
 
     for course in courses:
         for timeslot in course.time_slots:
-            # Check if the lecturer is available
+            # ✅ Check if the lecturer is available
             if not is_lecturer_available(course.lecturer_id, bookings, timeslot.day, timeslot.start_time, timeslot.end_time):
-                failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to Lecturer conflict")
-                continue  # Skip this slot
+                # ❌ Instead of immediately failing, try to reschedule
+                alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
 
-            # Attempt to find a free room for this timeslot
+                if alt_room and alt_timeslot and is_lecturer_available(course.lecturer_id, bookings, alt_timeslot.day, alt_timeslot.start_time, alt_timeslot.end_time):
+                    # ✅ Successfully found a new slot with an available lecturer
+                    new_booking = Booking(
+                        booking_id=booking_id_counter,
+                        room=alt_room,
+                        course=course,
+                        day=alt_timeslot.day,
+                        start_time=alt_timeslot.start_time,
+                        end_time=alt_timeslot.end_time
+                    )
+                    bookings.append(new_booking)
+                    booking_id_counter += 1
+                    print(f"⚠️ {course.name} originally planned on {} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to Lecturer conflict")
+                else:
+                    # ❌ If no alternative time was found, log failure
+                    failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to Lecturer conflict")
+                continue  # ✅ Skip the rest since we've handled the conflict
+
+            # ✅ Attempt to find a free room for this timeslot
             free_room, reason = find_free_room(rooms, bookings, course, timeslot)
             if free_room:
-                # Schedule successfully
+                # ✅ Schedule successfully
                 new_booking = Booking(
                     booking_id=booking_id_counter,
                     room=free_room,
@@ -122,10 +163,11 @@ def auto_schedule_courses(courses, rooms):
                 bookings.append(new_booking)
                 booking_id_counter += 1
             else:
-                # Try to find an alternative time slot
+                # ❌ Try to find an alternative time slot due to ROOM conflict
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
-                if alt_room and is_lecturer_available(course.lecturer_id, bookings, alt_timeslot.day, alt_timeslot.start_time, alt_timeslot.end_time):
-                    # Successfully found a new slot with an available lecturer
+
+                if alt_room and alt_timeslot and is_lecturer_available(course.lecturer_id, bookings, alt_timeslot.day, alt_timeslot.start_time, alt_timeslot.end_time):
+                    # ✅ Successfully found a new slot with an available lecturer
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,
@@ -138,11 +180,10 @@ def auto_schedule_courses(courses, rooms):
                     booking_id_counter += 1
                     print(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
                 else:
-                    # If no alternative time was found, log failure
+                    # ❌ If no alternative time was found, log failure
                     failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to {reason}")
 
     return bookings, failed_bookings
-
 
 def print_schedule(bookings, failed_bookings):
 
@@ -157,7 +198,7 @@ def print_schedule(bookings, failed_bookings):
         if booking.day != current_day:
             print(f"\n🗓 **{booking.day}**\n" + "-" * 30)
             current_day = booking.day
-        print(f"📌 {booking.start_time} - {booking.end_time}: {booking.course.name} [{booking.course.level} Level, Class Size: {booking.course.num_students}] -> {booking.room.name} (Capacity: {booking.room.capacity})")
+        print(f"📌 {booking.start_time} - {booking.end_time}: {booking.course.name} by Lecturer {booking.course.lecturer_id} [{booking.course.level} Level, Class Size: {booking.course.num_students}] -> {booking.room.name} (Capacity: {booking.room.capacity})")
 
     if failed_bookings:
         print("\n🚨 **Failed Scheduling Attempts**\n" + "-" * 30)
@@ -197,7 +238,7 @@ courses_massive = [
 
     # 200-Level Courses
     Course(201, "PHY 201 - Electromagnetic Fields", 200, 200,  
-           [TimeSlot("Monday", "08:00", "10:00"), TimeSlot("Wednesday", "08:00", "10:00")], lecturer_id=4),
+           [TimeSlot("Monday", "10:00", "12:00"), TimeSlot("Wednesday", "08:00", "10:00")], lecturer_id=4),
     Course(202, "PHY 202 - Quantum Mechanics", 200, 180,  
            [TimeSlot("Tuesday", "10:00", "12:00"), TimeSlot("Thursday", "08:00", "10:00")], lecturer_id=1),
     Course(203, "PHY 203 - Thermodynamics", 200, 120,  
