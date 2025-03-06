@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -43,6 +43,10 @@ class TimeSlot(db.Model):
 def home():
     return jsonify({'message': 'Welcome to UniSchedul API'}), 200
 
+
+# API Endpoints
+
+# GET /api/lecturers
 @app.route('/api/lecturers', methods=['GET'])
 def get_lecturers():
     lecturers = Lecturer.query.all()
@@ -50,6 +54,37 @@ def get_lecturers():
         {'id': l.id, 'name': l.name, 'department': l.department}
         for l in lecturers
     ])
+
+# POST /api/lecturers
+@app.route('/api/lecturers', methods=['POST'])
+def add_lecturer():
+    data = request.json
+    new_lecturer = Lecturer(name=data['name'], department=data['department'])
+    db.session.add(new_lecturer)
+    db.session.commit()
+    return jsonify({"message": "Lecturer added successfully"}), 201
+
+# PUT /api/lecturers/<id>
+@app.route('/api/lecturers/<int:id>', methods=['PUT'])
+def update_lecturer(id):
+    data = request.json
+    lecturer = Lecturer.query.get(id)
+    if lecturer:
+        lecturer.name = data['name']
+        lecturer.department = data['department']
+        db.session.commit()
+        return jsonify({"message": "Lecturer updated successfully"})
+    return jsonify({"error": "Lecturer not found"}), 404
+
+# DELETE /api/lecturers/<id>
+@app.route('/api/lecturers/<int:id>', methods=['DELETE'])
+def delete_lecturer(id):
+    lecturer = Lecturer.query.get(id)
+    if lecturer:
+        db.session.delete(lecturer)
+        db.session.commit()
+        return jsonify({"message": "Lecturer deleted successfully"})
+    return jsonify({"error": "Lecturer not found"}), 404
 
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():

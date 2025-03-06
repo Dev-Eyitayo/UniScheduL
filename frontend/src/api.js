@@ -13,6 +13,25 @@ export const fetchLecturers = async () => {
         return [];
     }
 };
+// Add a lecturer
+export const addLecturer = async (lecturer) => {
+    await axios.post(`${API_BASE_URL}/lecturers`, lecturer);
+};
+
+// Update a lecturer
+export const updateLecturer = async (id, lecturer) => {
+    await axios.put(`${API_BASE_URL}/lecturers/${id}`, lecturer);
+};
+
+// Delete a lecturer
+export const deleteLecturer = async (id) => {
+    await axios.delete(`${API_BASE_URL}/lecturers/${id}`);
+};
+
+
+
+
+
 
 // Fetch all rooms
 export const fetchRooms = async () => {
