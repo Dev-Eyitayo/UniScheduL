@@ -86,13 +86,46 @@ def delete_lecturer(id):
         return jsonify({"message": "Lecturer deleted successfully"})
     return jsonify({"error": "Lecturer not found"}), 404
 
+# --- API ROUTES FOR ROOM MANAGEMENT ---
+
+# Fetch all rooms
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():
     rooms = Room.query.all()
-    return jsonify([
-        {'id': r.id, 'name': r.name, 'capacity': r.capacity}
-        for r in rooms
-    ])
+    return jsonify([{"id": r.id, "name": r.name, "capacity": r.capacity} for r in rooms])
+
+# Add a new room
+@app.route('/api/rooms', methods=['POST'])
+def add_room():
+    data = request.json
+    new_room = Room(name=data['name'], capacity=data['capacity'])
+    db.session.add(new_room)
+    db.session.commit()
+    return jsonify({"message": "Room added successfully!"}), 201
+
+# Edit an existing room
+@app.route('/api/rooms/<int:room_id>', methods=['PUT'])
+def update_room(room_id):
+    room = Room.query.get(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    
+    data = request.json
+    room.name = data['name']
+    room.capacity = data['capacity']
+    db.session.commit()
+    return jsonify({"message": "Room updated successfully!"})
+
+# Delete a room
+@app.route('/api/rooms/<int:room_id>', methods=['DELETE'])
+def delete_room(room_id):
+    room = Room.query.get(room_id)
+    if not room:
+        return jsonify({"error": "Room not found"}), 404
+    
+    db.session.delete(room)
+    db.session.commit()
+    return jsonify({"message": "Room deleted successfully!"})
 
 @app.route('/api/courses', methods=['GET'])
 def get_courses():
@@ -118,5 +151,7 @@ def get_timeslots():
     ])
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Ensure the database and tables exist
     app.run(debug=True)
 
