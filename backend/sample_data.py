@@ -1,4 +1,4 @@
-from models import Room, Course, TimeSlot
+from algomind import Room, Course, TimeSlot
 #  Extreme test cases for scheduling algorithm stress testing
 rooms = [
     Room(1, "Physics Lab 1", 80),

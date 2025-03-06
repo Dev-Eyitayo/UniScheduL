@@ -1,4 +1,4 @@
-from models import Room, Course, TimeSlot, Booking
+from algomind import Room, Course, TimeSlot, Booking
 
 def times_overlap(start1, end1, start2, end2):
     """
