@@ -1,47 +1,67 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import axios from "axios";
 
-export default function LecturerForm({ onAddLecturer, onEditLecturer, editingLecturer }) {
+export default function LecturerForm({ onLecturerAdded }) {
+  const [lecturerID, setLecturerID] = useState("");
   const [name, setName] = useState("");
+  const [department, setDepartment] = useState("");
 
-  useEffect(() => {
-    if (editingLecturer) {
-      setName(editingLecturer.name);
-    }
-  }, [editingLecturer]);
+  // Department options
+  const departments = ["Physics", "Mathematics", "Computer Science", "Engineering"];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name) return alert("Lecturer name is required!");
-
-    const newLecturer = { lecturer_id: editingLecturer?.lecturer_id || null, name };
-
-    if (editingLecturer) {
-      onEditLecturer(newLecturer);
-    } else {
-      onAddLecturer(newLecturer);
+  // Handle Adding Lecturer
+  const handleAddLecturer = () => {
+    if (!lecturerID || !name || !department) {
+      alert("All fields are required!");
+      return;
     }
 
-    setName("");
+    axios.post("http://127.0.0.1:5000/lecturers", {
+      lecturer_id: lecturerID,
+      name: name,
+      department: department,
+    })
+    .then((response) => {
+      onLecturerAdded(response.data);
+      setLecturerID("");
+      setName("");
+      setDepartment("");
+    })
+    .catch((error) => console.error("Error adding lecturer:", error));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 shadow-md rounded-lg flex items-center space-x-4">
-      <div className="flex-1">
-        <label className="block text-sm font-medium">Lecturer Name</label>
-        <input 
-          type="text" 
-          className="w-full border rounded px-2 py-1" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
-        />
-      </div>
-
-      <button 
-        type="submit" 
-        className="bg-green-500 text-white px-4 py-2 rounded"
+    <div className="bg-white p-4 shadow-md rounded-lg flex gap-4">
+      <input
+        type="text"
+        placeholder="Lecturer ID"
+        className="border p-2 rounded flex-1"
+        value={lecturerID}
+        onChange={(e) => setLecturerID(e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Lecturer Name"
+        className="border p-2 rounded flex-1"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <select
+        className="border p-2 rounded flex-1"
+        value={department}
+        onChange={(e) => setDepartment(e.target.value)}
       >
-        {editingLecturer ? "Update Lecturer" : "Add Lecturer"}
+        <option value="">Select Department</option>
+        {departments.map((dept) => (
+          <option key={dept} value={dept}>{dept}</option>
+        ))}
+      </select>
+      <button 
+        className="bg-green-500 text-white px-4 py-2 rounded"
+        onClick={handleAddLecturer}
+      >
+        Add Lecturer
       </button>
-    </form>
+    </div>
   );
 }

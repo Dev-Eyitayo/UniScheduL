@@ -1,26 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import LecturerForm from "../../components/form/LecturerForm";
 
 export default function ManageLecturers() {
-  const [lecturers, setLecturers] = useState([
-    { lecturer_id: 1, name: "Dr. James Maxwell" },
-    { lecturer_id: 2, name: "Prof. Albert Newton" },
-    { lecturer_id: 3, name: "Dr. Katherine Johnson" },
-  ]);
+  const [lecturers, setLecturers] = useState([]);
 
-  const [editingLecturer, setEditingLecturer] = useState(null);
+  // Fetch lecturers from API
+  useEffect(() => {
+    axios.get("http://127.0.0.1:5000/lecturers")
+      .then((response) => setLecturers(response.data))
+      .catch((error) => console.error("Error fetching lecturers:", error));
+  }, []);
 
-  const handleAddLecturer = (lecturer) => {
-    setLecturers([...lecturers, { ...lecturer, lecturer_id: lecturers.length + 1 }]);
+  // Update list when a lecturer is added
+  const handleLecturerAdded = (newLecturer) => {
+    setLecturers([...lecturers, newLecturer]);
   };
 
-  const handleEditLecturer = (updatedLecturer) => {
-    setLecturers(lecturers.map((l) => (l.lecturer_id === updatedLecturer.lecturer_id ? updatedLecturer : l)));
-    setEditingLecturer(null);
-  };
-
-  const handleDeleteLecturer = (lecturerId) => {
-    setLecturers(lecturers.filter((l) => l.lecturer_id !== lecturerId));
+  // Handle Deleting Lecturer
+  const handleDeleteLecturer = (id) => {
+    axios.delete(`http://127.0.0.1:5000/lecturers/${id}`)
+      .then(() => setLecturers(lecturers.filter((l) => l.lecturer_id !== id)))
+      .catch((error) => console.error("Error deleting lecturer:", error));
   };
 
   return (
@@ -28,33 +29,25 @@ export default function ManageLecturers() {
       <h1 className="text-2xl font-semibold mb-4">Manage Lecturers</h1>
 
       {/* Lecturer Form */}
-      <LecturerForm 
-        onAddLecturer={handleAddLecturer} 
-        onEditLecturer={handleEditLecturer} 
-        editingLecturer={editingLecturer} 
-      />
+      <LecturerForm onLecturerAdded={handleLecturerAdded} />
 
       {/* Lecturer List */}
       <table className="w-full mt-4 border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Lecturer ID</th>
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Actions</th>
+            <th className="border px-4 py-2">Lecturer ID</th>
+            <th className="border px-4 py-2">Name</th>
+            <th className="border px-4 py-2">Department</th>
+            <th className="border px-4 py-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {lecturers.map((lecturer) => (
             <tr key={lecturer.lecturer_id} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">{lecturer.lecturer_id}</td>
-              <td className="border border-gray-300 px-4 py-2">{lecturer.name}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <button 
-                  className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
-                  onClick={() => setEditingLecturer(lecturer)}
-                >
-                  Edit
-                </button>
+              <td className="border px-4 py-2">{lecturer.lecturer_id}</td>
+              <td className="border px-4 py-2">{lecturer.name}</td>
+              <td className="border px-4 py-2">{lecturer.department}</td>
+              <td className="border px-4 py-2">
                 <button 
                   className="bg-red-500 text-white px-2 py-1 rounded"
                   onClick={() => handleDeleteLecturer(lecturer.lecturer_id)}
