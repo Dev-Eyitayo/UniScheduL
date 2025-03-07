@@ -14,7 +14,7 @@ export default function App() {
   return (
     <Router>
       <div className="flex">
-        <Sidebar />
+        {/* <Sidebar /> */}
         <div className="flex-1">
           <Navbar />
           <Routes>
