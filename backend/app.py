@@ -269,6 +269,28 @@ def delete_time_slot(timeslot_id):
     db.session.commit()
     return jsonify({"message": "Time slot deleted successfully!"})
 
+# --- API ROUTES FOR TIMETABLE MANAGEMENT ---
+@app.route('/api/timetable', methods=['GET'])
+def get_timetable():
+    """Fetch all scheduled courses organized by days."""
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    timetable = {day: [] for day in week_days}
+
+    courses = Course.query.all()
+    for course in courses:
+        for slot in course.time_slots:
+            timetable[slot.day].append({
+                "course_code": course.id,
+                "course_name": course.name,
+                "lecturer": course.lecturer.name,
+                "start_time": slot.start_time,
+                "end_time": slot.end_time,
+                "room": "N/A"  # We can enhance this if room allocation is added
+            })
+
+    return jsonify(timetable)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Ensure the database and tables exist
