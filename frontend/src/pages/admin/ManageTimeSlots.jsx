@@ -1,68 +1,144 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function WeeklyTimetable() {
-  const [timetable, setTimetable] = useState([]);
+export default function ManageTimeSlots() {
   const [timeSlots, setTimeSlots] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [filteredSlots, setFilteredSlots] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+
+  const [formData, setFormData] = useState({ course_id: "", day: "Monday", start_time: "", end_time: "" });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
   useEffect(() => {
-    fetchTimetable();
+    fetchTimeSlots();
+    fetchCourses();
   }, []);
 
-  const fetchTimetable = async () => {
+  // Fetch all time slots
+  const fetchTimeSlots = async () => {
     const res = await fetch("http://127.0.0.1:5000/api/timeslots");
     const data = await res.json();
     setTimeSlots(data);
+    setFilteredSlots(data);
   };
 
-  const getCoursesForTimeSlot = (day, time) => {
-    return timeSlots.filter((slot) => {
-      const start = slot.start_time;
-      const end = slot.end_time;
-      return (
-        slot.day === day &&
-        time >= start &&
-        time < end
-      );
+  // Fetch all courses
+  const fetchCourses = async () => {
+    const res = await fetch("http://127.0.0.1:5000/api/courses");
+    const data = await res.json();
+    setCourses(data);
+  };
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  // 📌 Filter time slots based on selected course
+  const handleCourseFilterChange = (e) => {
+    const selected = e.target.value;
+    setSelectedCourse(selected);
+    setFilteredSlots(selected ? timeSlots.filter(slot => slot.course_id === selected) : timeSlots);
+  };
+
+  // 📌 Handle Form Submit (Add or Update)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing
+      ? `http://127.0.0.1:5000/api/timeslots/${editingId}`
+      : "http://127.0.0.1:5000/api/timeslots";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
     });
+
+    if (res.ok) {
+      fetchTimeSlots();
+      setFormData({ course_id: "", day: "Monday", start_time: "", end_time: "" });
+      setIsEditing(false);
+    }
+  };
+
+  // 📌 Handle Edit Time Slot
+  const handleEdit = (slot) => {
+    setFormData({ course_id: slot.course_id, day: slot.day, start_time: slot.start_time, end_time: slot.end_time });
+    setIsEditing(true);
+    setEditingId(slot.id);
+  };
+
+  // 📌 Handle Delete Time Slot
+  const handleDelete = async (id) => {
+    const res = await fetch(`http://127.0.0.1:5000/api/timeslots/${id}`, { method: "DELETE" });
+    if (res.ok) fetchTimeSlots();
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">📅 Weekly Timetable</h2>
+      <h2 className="text-2xl font-bold mb-4">Manage Time Slots</h2>
+
+      {/* Time Slot Form */}
+      <form className="mb-6 flex gap-4" onSubmit={handleSubmit}>
+        <select name="course_id" className="border p-2 rounded" value={formData.course_id} onChange={handleChange} required>
+          <option value="">Select Course</option>
+          {courses.map(course => (
+            <option key={course.id} value={course.id}>
+              {course.id} - {course.name}
+            </option>
+          ))}
+        </select>
+
+        <select name="day" className="border p-2 rounded" value={formData.day} onChange={handleChange}>
+          {days.map(day => <option key={day} value={day}>{day}</option>)}
+        </select>
+
+        <input type="time" name="start_time" className="border p-2 rounded" value={formData.start_time} onChange={handleChange} required />
+        <input type="time" name="end_time" className="border p-2 rounded" value={formData.end_time} onChange={handleChange} required />
+
+        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
+          {isEditing ? "Update" : "Add"} Time Slot
+        </button>
+      </form>
+
+      {/* Course Filter Dropdown */}
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Filter by Course:</label>
+        <select name="filter_course" className="border p-2 rounded" value={selectedCourse} onChange={handleCourseFilterChange}>
+          <option value="">All Courses</option>
+          {courses.map(course => (
+            <option key={course.id} value={course.id}>
+              {course.id} - {course.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Time Slots Table */}
       <table className="w-full border">
         <thead>
           <tr className="bg-gray-200">
-            <th className="border px-4 py-2">Days</th>
-            {hours.map((hour) => (
-              <th key={hour} className="border px-4 py-2">{hour}</th>
-            ))}
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Day</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {days.map((day) => (
-            <tr key={day}>
-              <td className="border px-4 py-2 font-bold">{day}</td>
-              {hours.map((hour) => {
-                const courses = getCoursesForTimeSlot(day, hour);
-                if (courses.length > 0) {
-                  const colSpan = courses[0].start_time === hour ? Math.max(1, (parseInt(courses[0].end_time.split(":")[0]) - parseInt(hour.split(":")[0]))) : 0;
-                  return colSpan > 0 ? (
-                    <td key={hour} className="border px-4 py-2 bg-blue-100 font-semibold" colSpan={colSpan}>
-                      {courses.map((course, index) => (
-                        <div key={index}>
-                          <span className="font-bold">{course.course_id} - {course.course_name}</span>
-                          <br />
-                          <span className="text-sm">{course.lecturer_name}</span>
-                        </div>
-                      ))}
-                    </td>
-                  ) : null;
-                } else {
-                  return <td key={hour} className="border px-4 py-2 text-center">—</td>;
-                }
-              })}
+          {filteredSlots.map(slot => (
+            <tr key={slot.id}>
+              <td>{slot.course_id}</td>
+              <td>{courses.find(c => c.id === slot.course_id)?.name || "Unknown"}</td>
+              <td>{slot.day}</td>
+              <td>{slot.start_time}</td>
+              <td>{slot.end_time}</td>
+              <td>
+                <button className="bg-yellow-500 text-white px-3 py-1 rounded mr-2" onClick={() => handleEdit(slot)}>Edit</button>
+                <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => handleDelete(slot.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
