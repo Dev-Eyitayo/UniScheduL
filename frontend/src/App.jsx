@@ -7,14 +7,14 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageRooms from "./pages/admin/ManageRooms";
 import ManageCourses from "./pages/admin/ManageCourses";
-// import ManageTimeSlots from "./pages/admin/ManageTimeSlots";
+import ManageTimeSlots from "./pages/admin/ManageTimeSlots";
 import ManageLecturers from "./pages/admin/ManageLecturers";
 
 export default function App() {
   return (
     <Router>
       <div className="flex">
-        {/* <Sidebar /> */}
+        <Sidebar />
         <div className="flex-1">
           <Navbar />
           <Routes>
@@ -25,6 +25,7 @@ export default function App() {
             <Route path="/admin/rooms" element={<ManageRooms />} />
             <Route path="/admin/courses" element={<ManageCourses />} />
             <Route path="/admin/lecturers" element={<ManageLecturers />} />
+            <Route path="/admin/timeslots" element={<ManageTimeSlots />} />
           </Routes>
         </div>
       </div>
