@@ -9,6 +9,7 @@ import ManageRooms from "./pages/admin/ManageRooms";
 import ManageCourses from "./pages/admin/ManageCourses";
 import ManageTimeSlots from "./pages/admin/ManageTimeSlots";
 import ManageLecturers from "./pages/admin/ManageLecturers";
+import WeeklyTimetable from "./pages/admin/WeeklyTimetable";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/admin/courses" element={<ManageCourses />} />
             <Route path="/admin/lecturers" element={<ManageLecturers />} />
             <Route path="/admin/timeslots" element={<ManageTimeSlots />} />
+            <Route path="/admin/timetable" element={<WeeklyTimetable />} />
           </Routes>
         </div>
       </div>
