@@ -210,6 +210,7 @@ def get_time_slots():
             "course_id": ts.course_id,
             "course_code": ts.course.id,  # Include course code
             "course_name": ts.course.name,  # Include course title
+            "lecturer_name": ts.course.lecturer.name, 
             "day": ts.day,
             "start_time": ts.start_time,
             "end_time": ts.end_time

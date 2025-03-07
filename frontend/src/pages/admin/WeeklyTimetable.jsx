@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 export default function WeeklyTimetable() {
-  const [timetable, setTimetable] = useState([]);
+  // const [timetable, setTimetable] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
