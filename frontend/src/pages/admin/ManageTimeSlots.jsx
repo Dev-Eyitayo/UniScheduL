@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 export default function ManageTimeSlots() {
   const [timeSlots, setTimeSlots] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [filteredSlots, setFilteredSlots] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+
   const [formData, setFormData] = useState({
     course_id: "",
     day: "Monday",
@@ -23,6 +26,7 @@ export default function ManageTimeSlots() {
     const res = await fetch("http://127.0.0.1:5000/api/timeslots");
     const data = await res.json();
     setTimeSlots(data);
+    setFilteredSlots(data);
   };
 
   const fetchCourses = async () => {
@@ -33,10 +37,16 @@ export default function ManageTimeSlots() {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Synchronize course selection (either by name or code)
   const handleCourseChange = (e) => {
-    const selectedCourse = courses.find(c => c.id === e.target.value);
-    setFormData({ ...formData, course_id: selectedCourse ? selectedCourse.id : "" });
+    const selected = e.target.value;
+    setSelectedCourse(selected);
+
+    // Filter the time slots based on selected course
+    if (selected) {
+      setFilteredSlots(timeSlots.filter(slot => slot.course_id === selected));
+    } else {
+      setFilteredSlots(timeSlots);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -52,25 +62,11 @@ export default function ManageTimeSlots() {
       body: JSON.stringify(formData),
     });
 
-    const result = await res.json();
     if (res.ok) {
       fetchTimeSlots();
       setFormData({ course_id: "", day: "Monday", start_time: "", end_time: "" });
       setIsEditing(false);
-    } else {
-      alert(result.error);
     }
-  };
-
-  const handleEdit = (timeSlot) => {
-    setFormData(timeSlot);
-    setIsEditing(true);
-    setEditingId(timeSlot.id);
-  };
-
-  const handleDelete = async (id) => {
-    await fetch(`http://127.0.0.1:5000/api/timeslots/${id}`, { method: "DELETE" });
-    fetchTimeSlots();
   };
 
   return (
@@ -79,9 +75,8 @@ export default function ManageTimeSlots() {
 
       {/* Time Slot Form */}
       <form className="mb-6 flex gap-4" onSubmit={handleSubmit}>
-        {/* Course Code Dropdown */}
-        <select name="course_id" className="border p-2 rounded" value={formData.course_id} onChange={handleCourseChange} required>
-          <option value="">Select Course Code</option>
+        <select name="course_id" className="border p-2 rounded" value={formData.course_id} onChange={handleChange} required>
+          <option value="">Select Course</option>
           {courses.map(course => (
             <option key={course.id} value={course.id}>
               {course.id} - {course.name}
@@ -89,7 +84,6 @@ export default function ManageTimeSlots() {
           ))}
         </select>
 
-        {/* Day Selector */}
         <select name="day" className="border p-2 rounded" value={formData.day} onChange={handleChange}>
           {days.map(day => <option key={day} value={day}>{day}</option>)}
         </select>
@@ -101,6 +95,19 @@ export default function ManageTimeSlots() {
           {isEditing ? "Update" : "Add"} Time Slot
         </button>
       </form>
+
+      {/* Course Filter Dropdown */}
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Filter by Course:</label>
+        <select name="filter_course" className="border p-2 rounded" value={selectedCourse} onChange={handleCourseChange}>
+          <option value="">All Courses</option>
+          {courses.map(course => (
+            <option key={course.id} value={course.id}>
+              {course.id} - {course.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Time Slots Table */}
       <table className="w-full border">
@@ -115,7 +122,7 @@ export default function ManageTimeSlots() {
           </tr>
         </thead>
         <tbody>
-          {timeSlots.map(slot => (
+          {filteredSlots.map(slot => (
             <tr key={slot.id} className="border">
               <td>{slot.course_code}</td>
               <td>{slot.course_name}</td>
@@ -123,8 +130,8 @@ export default function ManageTimeSlots() {
               <td>{slot.start_time}</td>
               <td>{slot.end_time}</td>
               <td>
-                <button onClick={() => handleEdit(slot)} className="bg-yellow-500 text-white px-3 py-1 rounded mr-2">Edit</button>
-                <button onClick={() => handleDelete(slot.id)} className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                <button className="bg-yellow-500 text-white px-3 py-1 rounded mr-2">Edit</button>
+                <button className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
               </td>
             </tr>
           ))}
