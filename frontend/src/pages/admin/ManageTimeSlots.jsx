@@ -6,15 +6,10 @@ export default function ManageTimeSlots() {
   const [filteredSlots, setFilteredSlots] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
 
-  const [formData, setFormData] = useState({
-    course_id: "",
-    day: "Monday",
-    start_time: "",
-    end_time: "",
-  });
-
+  const [formData, setFormData] = useState({ course_id: "", day: "Monday", start_time: "", end_time: "" });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
   useEffect(() => {
@@ -22,6 +17,7 @@ export default function ManageTimeSlots() {
     fetchCourses();
   }, []);
 
+  // Fetch all time slots
   const fetchTimeSlots = async () => {
     const res = await fetch("http://127.0.0.1:5000/api/timeslots");
     const data = await res.json();
@@ -29,6 +25,7 @@ export default function ManageTimeSlots() {
     setFilteredSlots(data);
   };
 
+  // Fetch all courses
   const fetchCourses = async () => {
     const res = await fetch("http://127.0.0.1:5000/api/courses");
     const data = await res.json();
@@ -37,18 +34,14 @@ export default function ManageTimeSlots() {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleCourseChange = (e) => {
+  // 📌 Filter time slots based on selected course
+  const handleCourseFilterChange = (e) => {
     const selected = e.target.value;
     setSelectedCourse(selected);
-
-    // Filter the time slots based on selected course
-    if (selected) {
-      setFilteredSlots(timeSlots.filter(slot => slot.course_id === selected));
-    } else {
-      setFilteredSlots(timeSlots);
-    }
+    setFilteredSlots(selected ? timeSlots.filter(slot => slot.course_id === selected) : timeSlots);
   };
 
+  // 📌 Handle Form Submit (Add or Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = isEditing ? "PUT" : "POST";
@@ -67,6 +60,19 @@ export default function ManageTimeSlots() {
       setFormData({ course_id: "", day: "Monday", start_time: "", end_time: "" });
       setIsEditing(false);
     }
+  };
+
+  // 📌 Handle Edit Time Slot
+  const handleEdit = (slot) => {
+    setFormData({ course_id: slot.course_id, day: slot.day, start_time: slot.start_time, end_time: slot.end_time });
+    setIsEditing(true);
+    setEditingId(slot.id);
+  };
+
+  // 📌 Handle Delete Time Slot
+  const handleDelete = async (id) => {
+    const res = await fetch(`http://127.0.0.1:5000/api/timeslots/${id}`, { method: "DELETE" });
+    if (res.ok) fetchTimeSlots();
   };
 
   return (
@@ -99,7 +105,7 @@ export default function ManageTimeSlots() {
       {/* Course Filter Dropdown */}
       <div className="mb-4">
         <label className="mr-2 font-semibold">Filter by Course:</label>
-        <select name="filter_course" className="border p-2 rounded" value={selectedCourse} onChange={handleCourseChange}>
+        <select name="filter_course" className="border p-2 rounded" value={selectedCourse} onChange={handleCourseFilterChange}>
           <option value="">All Courses</option>
           {courses.map(course => (
             <option key={course.id} value={course.id}>
@@ -123,15 +129,15 @@ export default function ManageTimeSlots() {
         </thead>
         <tbody>
           {filteredSlots.map(slot => (
-            <tr key={slot.id} className="border">
-              <td>{slot.course_code}</td>
-              <td>{slot.course_name}</td>
+            <tr key={slot.id}>
+              <td>{slot.course_id}</td>
+              <td>{courses.find(c => c.id === slot.course_id)?.name || "Unknown"}</td>
               <td>{slot.day}</td>
               <td>{slot.start_time}</td>
               <td>{slot.end_time}</td>
               <td>
-                <button className="bg-yellow-500 text-white px-3 py-1 rounded mr-2">Edit</button>
-                <button className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                <button className="bg-yellow-500 text-white px-3 py-1 rounded mr-2" onClick={() => handleEdit(slot)}>Edit</button>
+                <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => handleDelete(slot.id)}>Delete</button>
               </td>
             </tr>
           ))}

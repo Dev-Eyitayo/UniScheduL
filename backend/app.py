@@ -201,73 +201,60 @@ def delete_course(course_id):
 # --- API ROUTES FOR TIME SLOT MANAGEMENT ---
 
 # Fetch all time slots
+#  API: Get all time slots
 @app.route('/api/timeslots', methods=['GET'])
-def get_time_slots():
-    time_slots = TimeSlot.query.all()
+def get_timeslots():
+    timeslots = TimeSlot.query.all()
     return jsonify([
         {
             "id": ts.id,
             "course_id": ts.course_id,
-            "course_code": ts.course.id,  # Include course code
-            "course_name": ts.course.name,  # Include course title
             "day": ts.day,
             "start_time": ts.start_time,
             "end_time": ts.end_time
-        }
-        for ts in time_slots
+        } for ts in timeslots
     ])
 
-
-# Add a new time slot
+#  API: Add a time slot
 @app.route('/api/timeslots', methods=['POST'])
-def add_time_slot():
+def add_timeslot():
     data = request.json
-    course = Course.query.get(data['course_id'])
-    
-    if not course:
-        return jsonify({"error": "Invalid Course ID"}), 400
-
-    # Ensure no conflicts
-    existing_slots = TimeSlot.query.filter_by(day=data['day']).all()
-    for ts in existing_slots:
-        if ts.start_time < data['end_time'] and data['start_time'] < ts.end_time:
-            return jsonify({"error": "Time conflict detected!"}), 400
-
-    new_time_slot = TimeSlot(
-        course_id=data['course_id'],
-        day=data['day'],
-        start_time=data['start_time'],
-        end_time=data['end_time']
+    new_slot = TimeSlot(
+        course_id=data["course_id"],
+        day=data["day"],
+        start_time=data["start_time"],
+        end_time=data["end_time"]
     )
-    db.session.add(new_time_slot)
+    db.session.add(new_slot)
     db.session.commit()
-    return jsonify({"message": "Time slot added successfully!"}), 201
+    return jsonify({"message": "Time slot added successfully"}), 201
 
-# Edit a time slot
-@app.route('/api/timeslots/<int:timeslot_id>', methods=['PUT'])
-def update_time_slot(timeslot_id):
-    time_slot = TimeSlot.query.get(timeslot_id)
-    if not time_slot:
-        return jsonify({"error": "Time slot not found"}), 404
-
+#  API: Update a time slot
+@app.route('/api/timeslots/<int:id>', methods=['PUT'])
+def update_timeslot(id):
     data = request.json
-    time_slot.day = data['day']
-    time_slot.start_time = data['start_time']
-    time_slot.end_time = data['end_time']
+    timeslot = TimeSlot.query.get(id)
+    if not timeslot:
+        return jsonify({"error": "TimeSlot not found"}), 404
     
-    db.session.commit()
-    return jsonify({"message": "Time slot updated successfully!"})
+    timeslot.course_id = data.get("course_id", timeslot.course_id)
+    timeslot.day = data.get("day", timeslot.day)
+    timeslot.start_time = data.get("start_time", timeslot.start_time)
+    timeslot.end_time = data.get("end_time", timeslot.end_time)
 
-# Delete a time slot
-@app.route('/api/timeslots/<int:timeslot_id>', methods=['DELETE'])
-def delete_time_slot(timeslot_id):
-    time_slot = TimeSlot.query.get(timeslot_id)
-    if not time_slot:
-        return jsonify({"error": "Time slot not found"}), 404
-
-    db.session.delete(time_slot)
     db.session.commit()
-    return jsonify({"message": "Time slot deleted successfully!"})
+    return jsonify({"message": "TimeSlot updated successfully"})
+
+# API: Delete a time slot
+@app.route('/api/timeslots/<int:id>', methods=['DELETE'])
+def delete_timeslot(id):
+    timeslot = TimeSlot.query.get(id)
+    if not timeslot:
+        return jsonify({"error": "TimeSlot not found"}), 404
+
+    db.session.delete(timeslot)
+    db.session.commit()
+    return jsonify({"message": "TimeSlot deleted successfully"})
 
 # --- API ROUTES FOR TIMETABLE MANAGEMENT ---
 @app.route('/api/timetable', methods=['GET'])
