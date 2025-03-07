@@ -1,33 +1,39 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function WeeklyTimetable() {
   const [timetable, setTimetable] = useState([]);
-  const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+  const [timeSlots, setTimeSlots] = useState([]);
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
   useEffect(() => {
     fetchTimetable();
   }, []);
 
   const fetchTimetable = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/timetable");
+    const res = await fetch("http://127.0.0.1:5000/api/timeslots");
     const data = await res.json();
-    setTimetable(data);
+    setTimeSlots(data);
   };
 
-  // Helper function to calculate colSpan based on time duration
-  const calculateColSpan = (start, end) => {
-    const startIndex = hours.indexOf(start);
-    const endIndex = hours.indexOf(end);
-    return endIndex - startIndex;
+  const getCoursesForTimeSlot = (day, time) => {
+    return timeSlots.filter((slot) => {
+      const start = slot.start_time;
+      const end = slot.end_time;
+      return (
+        slot.day === day &&
+        time >= start &&
+        time < end
+      );
+    });
   };
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">📅 Weekly Timetable</h2>
-      <table className="w-full border text-center">
+      <table className="w-full border">
         <thead>
-          <tr className="bg-blue-500 text-white">
+          <tr className="bg-gray-200">
             <th className="border px-4 py-2">Days</th>
             {hours.map((hour) => (
               <th key={hour} className="border px-4 py-2">{hour}</th>
@@ -36,27 +42,25 @@ export default function WeeklyTimetable() {
         </thead>
         <tbody>
           {days.map((day) => (
-            <tr key={day} className="border">
+            <tr key={day}>
               <td className="border px-4 py-2 font-bold">{day}</td>
-              {hours.map((hour, index) => {
-                const slot = timetable.find(
-                  (slot) => slot.day === day && slot.start_time === hour
-                );
-
-                if (slot) {
-                  const colSpan = calculateColSpan(slot.start_time, slot.end_time);
-                  return (
-                    <td
-                      key={index}
-                      colSpan={colSpan}
-                      className="border px-4 py-2 bg-gray-100 font-semibold"
-                    >
-                      <span className="block text-sm font-bold">{slot.course_code} - {slot.course_name}</span>
-                      <span className="text-xs">{slot.lecturer_name}</span>
+              {hours.map((hour) => {
+                const courses = getCoursesForTimeSlot(day, hour);
+                if (courses.length > 0) {
+                  const colSpan = courses[0].start_time === hour ? Math.max(1, (parseInt(courses[0].end_time.split(":")[0]) - parseInt(hour.split(":")[0]))) : 0;
+                  return colSpan > 0 ? (
+                    <td key={hour} className="border px-4 py-2 bg-blue-100 font-semibold" colSpan={colSpan}>
+                      {courses.map((course, index) => (
+                        <div key={index}>
+                          <span className="font-bold">{course.course_id} - {course.course_name}</span>
+                          <br />
+                          <span className="text-sm">{course.lecturer_name}</span>
+                        </div>
+                      ))}
                     </td>
-                  );
+                  ) : null;
                 } else {
-                  return <td key={index} className="border px-4 py-2">—</td>;
+                  return <td key={hour} className="border px-4 py-2 text-center">—</td>;
                 }
               })}
             </tr>
