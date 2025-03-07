@@ -4,8 +4,13 @@ export default function ManageCourses() {
   const [courses, setCourses] = useState([]);
   const [lecturers, setLecturers] = useState([]);
   const [formData, setFormData] = useState({
-    id: "", name: "", level: 100, num_students: 0, lecturer_id: "", time_slots: []
+    id: "",
+    name: "",
+    level: 100,
+    num_students: 0,
+    lecturer_id: "",
   });
+
   const [isEditing, setIsEditing] = useState(false);
   const levels = [100, 200, 300, 400, 500, 600];
 
@@ -28,7 +33,8 @@ export default function ManageCourses() {
   };
 
   // Handle form change
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   // Add or Edit Course
   const handleSubmit = async (e) => {
@@ -44,7 +50,13 @@ export default function ManageCourses() {
       body: JSON.stringify(formData),
     });
 
-    setFormData({ id: "", name: "", level: 100, num_students: 0, lecturer_id: "", time_slots: [] });
+    setFormData({
+      id: "",
+      name: "",
+      level: 100,
+      num_students: 0,
+      lecturer_id: "",
+    });
     setIsEditing(false);
     fetchCourses();
   };
@@ -63,38 +75,102 @@ export default function ManageCourses() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Manage Courses</h2>
+      <h2 className="text-2xl font-bold mb-4">📚 Manage Courses</h2>
 
       {/* Course Form */}
-      <form className="mb-6 flex gap-4" onSubmit={handleSubmit}>
-        <input type="text" name="id" placeholder="Course Code" className="border p-2 rounded" value={formData.id} onChange={handleChange} required />
-        <input type="text" name="name" placeholder="Course Name" className="border p-2 rounded" value={formData.name} onChange={handleChange} required />
-        
-        <select name="level" className="border p-2 rounded" value={formData.level} onChange={handleChange}>
-          {levels.map(level => <option key={level} value={level}>{level}</option>)}
+      <form className="mb-6 flex gap-4 flex-wrap" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="id"
+          placeholder="Course Code"
+          className="border p-2 rounded w-40"
+          value={formData.id}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="name"
+          placeholder="Course Name"
+          className="border p-2 rounded flex-1"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <select
+          name="level"
+          className="border p-2 rounded w-20"
+          value={formData.level}
+          onChange={handleChange}
+        >
+          {levels.map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
+          ))}
         </select>
-
-        <input type="number" name="num_students" placeholder="Students" className="border p-2 rounded" value={formData.num_students} onChange={handleChange} required />
-        
-        <select name="lecturer_id" className="border p-2 rounded" value={formData.lecturer_id} onChange={handleChange}>
-          {lecturers.map(lect => <option key={lect.id} value={lect.id}>{lect.name}</option>)}
+        <input
+          type="number"
+          name="num_students"
+          placeholder="No. of Students"
+          className="border p-2 rounded w-32"
+          value={formData.num_students}
+          onChange={handleChange}
+          required
+        />
+        <select
+          name="lecturer_id"
+          className="border p-2 rounded w-40"
+          value={formData.lecturer_id}
+          onChange={handleChange}
+        >
+          <option value="">Select Lecturer</option>
+          {lecturers.map((lect) => (
+            <option key={lect.id} value={lect.id}>
+              {lect.name}
+            </option>
+          ))}
         </select>
-
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">{isEditing ? "Update" : "Add"} Course</button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
+          {isEditing ? "Update" : "Add"} Course
+        </button>
       </form>
 
       {/* Courses Table */}
       <table className="w-full border">
         <thead>
-          <tr className="bg-gray-200"><th>Code</th><th>Name</th><th>Level</th><th>Actions</th></tr>
+          <tr className="bg-gray-200">
+            <th className="border px-4 py-2">Code</th>
+            <th className="border px-4 py-2">Name</th>
+            <th className="border px-4 py-2">Level</th>
+            <th className="border px-4 py-2">Students</th>
+            <th className="border px-4 py-2">Lecturer</th>
+            <th className="border px-4 py-2">Actions</th>
+          </tr>
         </thead>
         <tbody>
-          {courses.map(course => (
+          {courses.map((course) => (
             <tr key={course.id} className="border">
-              <td>{course.id}</td><td>{course.name}</td><td>{course.level}</td>
-              <td>
-                <button onClick={() => handleEdit(course)} className="bg-yellow-500 text-white px-3 py-1 rounded mr-2">Edit</button>
-                <button onClick={() => handleDelete(course.id)} className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+              <td className="border px-4 py-2">{course.id}</td>
+              <td className="border px-4 py-2">{course.name}</td>
+              <td className="border px-4 py-2">{course.level}</td>
+              <td className="border px-4 py-2">{course.num_students}</td>
+              <td className="border px-4 py-2">
+                {lecturers.find((l) => l.id === course.lecturer_id)?.name || "N/A"}
+              </td>
+              <td className="border px-4 py-2">
+                <button
+                  onClick={() => handleEdit(course)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(course.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
