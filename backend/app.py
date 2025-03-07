@@ -146,11 +146,6 @@ def get_courses():
         for c in courses
     ])
 
-# Fetch all lecturers (for dropdown)
-@app.route('/api/lecturers', methods=['GET'])
-def get_lecturers():
-    lecturers = Lecturer.query.all()
-    return jsonify([{"id": l.id, "name": l.name} for l in lecturers])
 
 # Add a new course
 @app.route('/api/courses', methods=['POST'])
