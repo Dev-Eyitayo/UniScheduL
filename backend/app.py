@@ -127,20 +127,81 @@ def delete_room(room_id):
     db.session.commit()
     return jsonify({"message": "Room deleted successfully!"})
 
+
+# --- API ROUTES FOR COURSE MANAGEMENT ---
+
+# Fetch all courses
 @app.route('/api/courses', methods=['GET'])
 def get_courses():
     courses = Course.query.all()
     return jsonify([
         {
-            'id': c.id,
-            'name': c.name,
-            'level': c.level,
-            'num_students': c.num_students,
-            'lecturer': c.lecturer.name,
-            'time_slots': [{'day': ts.day, 'start': ts.start_time, 'end': ts.end_time} for ts in c.time_slots]
+            "id": c.id,
+            "name": c.name,
+            "level": c.level,
+            "num_students": c.num_students,
+            "lecturer_id": c.lecturer_id,
+            "time_slots": [{"day": ts.day, "start_time": ts.start_time, "end_time": ts.end_time} for ts in c.time_slots]
         }
         for c in courses
     ])
+
+# Fetch all lecturers (for dropdown)
+@app.route('/api/lecturers', methods=['GET'])
+def get_lecturers():
+    lecturers = Lecturer.query.all()
+    return jsonify([{"id": l.id, "name": l.name} for l in lecturers])
+
+# Add a new course
+@app.route('/api/courses', methods=['POST'])
+def add_course():
+    data = request.json
+    new_course = Course(
+        id=data['id'], name=data['name'], level=data['level'], 
+        num_students=data['num_students'], lecturer_id=data['lecturer_id']
+    )
+    db.session.add(new_course)
+    
+    for slot in data['time_slots']:  # Save time slots
+        new_slot = TimeSlot(course_id=data['id'], day=slot['day'], start_time=slot['start_time'], end_time=slot['end_time'])
+        db.session.add(new_slot)
+    
+    db.session.commit()
+    return jsonify({"message": "Course added successfully!"}), 201
+
+# Edit a course
+@app.route('/api/courses/<string:course_id>', methods=['PUT'])
+def update_course(course_id):
+    course = Course.query.get(course_id)
+    if not course:
+        return jsonify({"error": "Course not found"}), 404
+    
+    data = request.json
+    course.name = data['name']
+    course.level = data['level']
+    course.num_students = data['num_students']
+    course.lecturer_id = data['lecturer_id']
+
+    # Update time slots
+    TimeSlot.query.filter_by(course_id=course_id).delete()
+    for slot in data['time_slots']:
+        new_slot = TimeSlot(course_id=course_id, day=slot['day'], start_time=slot['start_time'], end_time=slot['end_time'])
+        db.session.add(new_slot)
+    
+    db.session.commit()
+    return jsonify({"message": "Course updated successfully!"})
+
+# Delete a course
+@app.route('/api/courses/<string:course_id>', methods=['DELETE'])
+def delete_course(course_id):
+    course = Course.query.get(course_id)
+    if not course:
+        return jsonify({"error": "Course not found"}), 404
+
+    db.session.delete(course)
+    db.session.commit()
+    return jsonify({"message": "Course deleted successfully!"})
+
 
 @app.route('/api/timeslots', methods=['GET'])
 def get_timeslots():
