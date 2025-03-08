@@ -8,7 +8,7 @@ export default function Navbar() {
   return (
     <nav className="bg-blue-600 p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-white text-2xl font-bold">UniSchedul</h1>
+        <h1 className="text-white text-2xl font-bold">UniScheduL</h1>
         <div className="hidden md:flex gap-6">
           <Link className="text-white hover:underline" to="/">Home</Link>
           <Link className="text-white hover:underline" to="/dashboard">Dashboard</Link>
