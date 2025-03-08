@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from scheduler import auto_schedule_courses 
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend interaction
@@ -290,6 +291,42 @@ def get_timetable():
             })
 
     return jsonify(timetable)
+
+
+@app.route('/api/run-algorithm', methods=['GET'])
+def run_algorithm():
+    """Fetches timetable data, runs the scheduling algorithm, and returns results"""
+    
+    # Fetch all necessary data from the database
+    rooms = Room.query.all()
+    courses = Course.query.all()
+
+    # Convert data into algorithm-readable format
+    room_list = [Room(r.id, r.name, r.capacity) for r in rooms]
+    course_list = [
+        Course(c.id, c.name, c.level, c.num_students, [
+            TimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots
+        ], c.lecturer_id) for c in courses
+    ]
+
+    # Run the scheduling algorithm
+    bookings, failed_bookings = auto_schedule_courses(course_list, room_list)
+
+    # Format results for JSON response
+    result = {
+        "bookings": [{
+            "course_id": b.course.id,
+            "course_name": b.course.name,
+            "lecturer": b.course.lecturer_id,
+            "room": b.room.name,
+            "day": b.day,
+            "start_time": b.start_time,
+            "end_time": b.end_time
+        } for b in bookings],
+        "failed_bookings": failed_bookings
+    }
+
+    return jsonify(result), 200
 
 
 if __name__ == '__main__':
