@@ -297,38 +297,58 @@ def get_timetable():
 # API Algorithm 
 @app.route('/api/run-algorithm', methods=['GET'])
 def run_algorithm():
-    """Fetches timetable data, runs the scheduling algorithm, and returns results"""
-    
+    """Fetches timetable data, runs the scheduling algorithm, and returns formatted results."""
+
     # Fetch all necessary data from the database
     rooms = Room.query.all()
     courses = Course.query.all()
 
-    # Convert data into algorithm-readable format
+    # Convert database data into algorithm-compatible format using `AlgoRoom`, `AlgoCourse`, `AlgoTimeSlot`
     room_list = [AlgoRoom(r.id, r.name, r.capacity) for r in rooms]
     course_list = [
-        AlgoCourse(c.id, c.name, c.level, c.num_students, [
-            AlgoTimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots
-        ], c.lecturer_id) for c in courses
+        AlgoCourse(
+            c.id, c.name, c.level, c.num_students,
+            [AlgoTimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots],
+            c.lecturer_id
+        ) for c in courses
     ]
 
     # Run the scheduling algorithm
     bookings, failed_bookings = auto_schedule_courses(course_list, room_list)
 
-    # Format results for JSON response
-    result = {
-        "bookings": [{
-            "course_id": b.course.id,
-            "course_name": b.course.name,
-            "lecturer": b.course.lecturer_id,
-            "room": b.room.name,
-            "day": b.day,
-            "start_time": b.start_time,
-            "end_time": b.end_time
-        } for b in bookings],
-        "failed_bookings": failed_bookings
-    }
+    # Format results in a structured console-style output
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    formatted_result = ""
 
-    return jsonify(result), 200
+    # **Warnings for rescheduled courses**
+    if any("moved to" in warning for warning in failed_bookings):
+        formatted_result += "\n".join([f"⚠️ {warning}" for warning in failed_bookings if "moved to" in warning]) + "\n\n"
+
+    formatted_result += "📅 **Final Room Schedule**\n\n"
+
+    # **Organize bookings by day**
+    bookings_by_day = {day: [] for day in week_days}
+    for b in bookings:
+        bookings_by_day[b.day].append(b)
+
+    # **Sort and format bookings by time**
+    for day in week_days:
+        if bookings_by_day[day]:
+            formatted_result += f"\n🗓 **{day}**\n" + "-" * 30 + "\n"
+            sorted_bookings = sorted(bookings_by_day[day], key=lambda b: b.start_time)
+            for b in sorted_bookings:
+                formatted_result += (f"📌 {b.start_time} - {b.end_time}: {b.course.name} "
+                                     f"by Lecturer {b.course.lecturer_id} "
+                                     f"[{b.course.level} Level, Class Size: {b.course.num_students}] "
+                                     f"-> {b.room.name} (Capacity: {b.room.capacity})\n")
+
+    # **Failed bookings**
+    failed_entries = [f"❌ {fail}" for fail in failed_bookings if "moved to" not in fail]
+    if failed_entries:
+        formatted_result += "\n🚨 **Failed Scheduling Attempts**\n" + "-" * 30 + "\n"
+        formatted_result += "\n".join(failed_entries) + "\n"
+
+    return jsonify({"console_output": formatted_result}), 200
 
 
 if __name__ == '__main__':
