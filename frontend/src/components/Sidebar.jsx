@@ -24,7 +24,10 @@ export default function Sidebar() {
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md font-bold" to="/admin/timetable">
           <CalendarIcon className="w-5 h-5" /> View Timetable
         </Link>
-        
+        <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/optimized-timetable">
+          <ClockIcon className="w-5 h-5" /> Optimized Timetable
+        </Link>
+
       </nav>
     </aside>
   );

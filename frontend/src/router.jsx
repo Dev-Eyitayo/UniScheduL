@@ -12,8 +12,8 @@ const AppRouter = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="*" element={<NotFound />} />
         <Route path="/optimized-timetable" element={<OptimizedSchedule />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
