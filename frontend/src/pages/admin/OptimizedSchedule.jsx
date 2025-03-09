@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 export default function OptimizedSchedule() {
   const [logs, setLogs] = useState([]);
   const [schedule, setSchedule] = useState([]);
-  const [failedBookings, setFailedBookings] = useState([]); // ✅ New state for failed bookings
+  const [failedBookings, setFailedBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -15,9 +15,13 @@ export default function OptimizedSchedule() {
       if (!res.ok) throw new Error("Failed to run the algorithm");
 
       const data = await res.json();
-      setLogs(data.logs); // ✅ Store logs
-      setSchedule(data.bookings); // ✅ Store scheduled timetable
-      setFailedBookings(data.failed_bookings); // ✅ Store failed bookings
+      setLogs(data.logs);
+      setSchedule(data.bookings);
+      setFailedBookings(data.failed_bookings);
+
+      // Store data in localStorage for GeneratePDF.jsx
+      localStorage.setItem("schedule", JSON.stringify(data.bookings));
+      localStorage.setItem("failedBookings", JSON.stringify(data.failed_bookings));
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -28,7 +32,9 @@ export default function OptimizedSchedule() {
   const clearLogs = () => {
     setLogs([]);
     setSchedule([]);
-    setFailedBookings([]); // ✅ Clear failed bookings too
+    setFailedBookings([]);
+    localStorage.removeItem("schedule");
+    localStorage.removeItem("failedBookings");
   };
 
   return (
@@ -44,8 +50,6 @@ export default function OptimizedSchedule() {
         >
           {loading ? "Running Algorithm..." : "Run Algorithm"}
         </button>
-
-
 
         {logs.length > 0 && (
           <>
