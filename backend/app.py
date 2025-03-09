@@ -296,6 +296,7 @@ def get_timetable():
 
 # API Algorithm Endpoint
 @app.route('/api/run-algorithm', methods=['GET'])
+@app.route('/api/run-algorithm', methods=['GET'])
 def run_algorithm():
     """Fetches timetable data, runs the scheduling algorithm, and returns results"""
     

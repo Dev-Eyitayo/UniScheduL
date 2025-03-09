@@ -3,6 +3,7 @@ import React, { useState } from "react";
 export default function OptimizedSchedule() {
   const [logs, setLogs] = useState([]);
   const [schedule, setSchedule] = useState([]);
+  const [failedBookings, setFailedBookings] = useState([]); // ✅ New state for failed bookings
   const [loading, setLoading] = useState(false);
 
   const runAlgorithm = async () => {
@@ -14,6 +15,7 @@ export default function OptimizedSchedule() {
       const data = await res.json();
       setLogs(data.logs); // ✅ Store logs
       setSchedule(data.bookings); // ✅ Store scheduled timetable
+      setFailedBookings(data.failed_bookings); // ✅ Store failed bookings
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -24,6 +26,7 @@ export default function OptimizedSchedule() {
   const clearLogs = () => {
     setLogs([]);
     setSchedule([]);
+    setFailedBookings([]); // ✅ Clear failed bookings too
   };
 
   return (
@@ -83,6 +86,20 @@ export default function OptimizedSchedule() {
               </ul>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Failed Bookings Section */}
+      {failedBookings.length > 0 && (
+        <div className="mt-6 bg-red-100 p-4 rounded">
+          <h3 className="text-lg font-semibold text-red-700 mb-2">🚨 Failed Scheduling Attempts:</h3>
+          <ul className="list-disc list-inside">
+            {failedBookings.map((failure, index) => (
+              <li key={index} className="text-red-700">
+                ❌ {failure}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
