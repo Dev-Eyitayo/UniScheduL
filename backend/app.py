@@ -1,6 +1,9 @@
-from flask import Flask, jsonify, request
+import io
+from flask import Flask, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from scheduler import auto_schedule_courses 
 from algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
 
@@ -337,6 +340,74 @@ def run_algorithm():
     }
 
     return jsonify(result), 200
+
+@app.route('/api/generate-pdf', methods=['POST'])
+def generate_pdf():
+    """Generate and stream a PDF dynamically without storing it."""
+
+    data = request.json
+    semester = data.get("semester", "Unknown Semester")
+    academic_year = data.get("academic_year", "Unknown Year")
+    department = data.get("department", "Unknown Department")
+    schedule = data.get("schedule", [])
+    failed_bookings = data.get("failed_bookings", [])
+
+    # Create an in-memory buffer
+    pdf_buffer = io.BytesIO()
+
+    # Generate PDF in-memory
+    c = canvas.Canvas(pdf_buffer, pagesize=letter)
+    width, height = letter
+
+    # Add Header
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(100, height - 50, f"{department} - {semester} ({academic_year})")
+    c.line(100, height - 55, 500, height - 55)
+
+    y_position = height - 80
+
+    # Add schedule
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(100, y_position, "📅 Final Room Schedule:")
+    y_position -= 20
+
+    if schedule:
+        for entry in schedule:
+            if y_position < 50:  # Start new page if necessary
+                c.showPage()
+                c.setFont("Helvetica", 10)
+                y_position = height - 50
+
+            text = f"📌 {entry['day']} {entry['start_time']} - {entry['end_time']}: {entry['course_name']} in {entry['room']}"
+            c.drawString(100, y_position, text)
+            y_position -= 15
+
+    # Add failed bookings
+    if failed_bookings:
+        y_position -= 20
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(100, y_position, "🚨 Failed Scheduling Attempts:")
+        y_position -= 20
+        c.setFont("Helvetica", 10)
+
+        for failure in failed_bookings:
+            if y_position < 50:
+                c.showPage()
+                c.setFont("Helvetica", 10)
+                y_position = height - 50
+
+            c.drawString(100, y_position, f"❌ {failure}")
+            y_position -= 15
+
+    c.save()
+
+    # Move to the beginning of the buffer
+    pdf_buffer.seek(0)
+
+    # Return the file directly as a response (no file storage)
+    return send_file(pdf_buffer, as_attachment=True, download_name="Schedule.pdf", mimetype="application/pdf")
+
+
 
 if __name__ == '__main__':
     with app.app_context():

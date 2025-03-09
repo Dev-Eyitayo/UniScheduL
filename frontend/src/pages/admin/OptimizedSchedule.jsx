@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function OptimizedSchedule() {
   const [logs, setLogs] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [failedBookings, setFailedBookings] = useState([]); // ✅ New state for failed bookings
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const runAlgorithm = async () => {
     setLoading(true);
@@ -43,13 +45,23 @@ export default function OptimizedSchedule() {
           {loading ? "Running Algorithm..." : "Run Algorithm"}
         </button>
 
+
+
         {logs.length > 0 && (
-          <button
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
-            onClick={clearLogs}
-          >
-            Clear Logs 🗑️
-          </button>
+          <>
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+              onClick={clearLogs}
+            >
+              Clear Logs 🗑️
+            </button>
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+              onClick={() => navigate("/generate-pdf")}
+            >
+              📄 Generate PDF
+            </button>
+          </>
         )}
       </div>
 

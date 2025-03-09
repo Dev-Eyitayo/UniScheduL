@@ -11,6 +11,7 @@ import ManageTimeSlots from "./pages/admin/ManageTimeSlots";
 import ManageLecturers from "./pages/admin/ManageLecturers";
 import WeeklyTimetable from "./pages/admin/WeeklyTimetable";
 import OptimizedSchedule from "./pages/admin/OptimizedSchedule";
+import GeneratePDF from "./pages/admin/GeneratePDF";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/admin/timeslots" element={<ManageTimeSlots />} />
             <Route path="/admin/timetable" element={<WeeklyTimetable />} />
             <Route path="/optimized-timetable" element={<OptimizedSchedule />} />
+            <Route path="/generate-pdf" element={<GeneratePDF />} />
           </Routes>
         </div>
       </div>
