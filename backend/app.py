@@ -341,72 +341,76 @@ def run_algorithm():
 
     return jsonify(result), 200
 
+# Function to structure the schedule like OptimizedSchedule.jsx
+def format_schedule_for_pdf(bookings, failed_bookings):
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+    # Sort bookings first by day, then by time
+    sorted_bookings = sorted(bookings, key=lambda x: (week_days.index(x["day"]), x["start_time"]))
+
+    # Organize bookings by day
+    schedule_by_day = {day: [] for day in week_days}
+    for booking in sorted_bookings:
+        schedule_by_day[booking["day"]].append(
+            f"🔹 {booking['start_time']} - {booking['end_time']}: {booking['course_name']} "
+            f"in {booking['room']} by Lecturer {booking.get('lecturer', 'Unknown')}"
+        )
+
+    # Organize failed bookings
+    formatted_failed_bookings = [f"❌ {failure}" for failure in failed_bookings]
+
+    return schedule_by_day, formatted_failed_bookings
+
+
 @app.route('/api/generate-pdf', methods=['POST'])
 def generate_pdf():
-    """Generate and stream a PDF dynamically without storing it."""
-
     data = request.json
     semester = data.get("semester", "Unknown Semester")
     academic_year = data.get("academic_year", "Unknown Year")
     department = data.get("department", "Unknown Department")
-    schedule = data.get("schedule", [])
+    bookings = data.get("schedule", [])
     failed_bookings = data.get("failed_bookings", [])
 
-    # Create an in-memory buffer
-    pdf_buffer = io.BytesIO()
+    # Format the schedule properly
+    schedule_by_day, formatted_failed_bookings = format_schedule_for_pdf(bookings, failed_bookings)
 
-    # Generate PDF in-memory
-    c = canvas.Canvas(pdf_buffer, pagesize=letter)
-    width, height = letter
+    # Create PDF
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", style='B', size=16)
+    pdf.cell(200, 10, f"{department} - {semester} ({academic_year})", ln=True, align='L')
+    pdf.ln(5)
+    
+    # Final Room Schedule Section
+    pdf.set_font("Arial", style='B', size=12)
+    pdf.cell(200, 10, "📅 Final Room Schedule:", ln=True)
+    pdf.ln(3)
+    
+    pdf.set_font("Arial", size=10)
+    for day in schedule_by_day:
+        if schedule_by_day[day]:
+            pdf.set_font("Arial", style='B', size=11)
+            pdf.cell(200, 8, f"📌 {day}", ln=True)
+            pdf.set_font("Arial", size=10)
+            for entry in schedule_by_day[day]:
+                pdf.cell(200, 7, entry, ln=True)
+            pdf.ln(3)
 
-    # Add Header
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(100, height - 50, f"{department} - {semester} ({academic_year})")
-    c.line(100, height - 55, 500, height - 55)
+    # Failed Scheduling Attempts Section
+    if formatted_failed_bookings:
+        pdf.set_font("Arial", style='B', size=12)
+        pdf.cell(200, 10, "🚨 Failed Scheduling Attempts:", ln=True)
+        pdf.ln(3)
+        pdf.set_font("Arial", size=10)
+        for failure in formatted_failed_bookings:
+            pdf.cell(200, 7, failure, ln=True)
+    
+    # Save PDF
+    pdf_output_path = "generated_schedule.pdf"
+    pdf.output(pdf_output_path)
 
-    y_position = height - 80
-
-    # Add schedule
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(100, y_position, "📅 Final Room Schedule:")
-    y_position -= 20
-
-    if schedule:
-        for entry in schedule:
-            if y_position < 50:  # Start new page if necessary
-                c.showPage()
-                c.setFont("Helvetica", 10)
-                y_position = height - 50
-
-            text = f"📌 {entry['day']} {entry['start_time']} - {entry['end_time']}: {entry['course_name']} in {entry['room']}"
-            c.drawString(100, y_position, text)
-            y_position -= 15
-
-    # Add failed bookings
-    if failed_bookings:
-        y_position -= 20
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(100, y_position, "🚨 Failed Scheduling Attempts:")
-        y_position -= 20
-        c.setFont("Helvetica", 10)
-
-        for failure in failed_bookings:
-            if y_position < 50:
-                c.showPage()
-                c.setFont("Helvetica", 10)
-                y_position = height - 50
-
-            c.drawString(100, y_position, f"❌ {failure}")
-            y_position -= 15
-
-    c.save()
-
-    # Move to the beginning of the buffer
-    pdf_buffer.seek(0)
-
-    # Return the file directly as a response (no file storage)
-    return send_file(pdf_buffer, as_attachment=True, download_name="Schedule.pdf", mimetype="application/pdf")
-
+    return send_file(pdf_output_path, as_attachment=True)
 
 
 if __name__ == '__main__':
