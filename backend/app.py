@@ -294,11 +294,11 @@ def get_timetable():
     return jsonify(timetable)
 
 
-# API Algorithm 
+# API Algorithm Endpoint
 @app.route('/api/run-algorithm', methods=['GET'])
 def run_algorithm():
-    """Fetches timetable data, runs the scheduling algorithm, and returns results including logs."""
-
+    """Fetches timetable data, runs the scheduling algorithm, and returns results"""
+    
     # Fetch all necessary data from the database
     rooms = Room.query.all()
     courses = Course.query.all()
@@ -311,27 +311,31 @@ def run_algorithm():
         ], c.lecturer_id) for c in courses
     ]
 
-    # Run the scheduling algorithm **with log capture**
-    logs = []
-    bookings, failed_bookings = auto_schedule_courses(course_list, room_list, logs)  # <-- Pass log list
+    # Initialize logs
+    logs = []  # ✅ Add this so logs can be recorded properly
+
+    # Run the scheduling algorithm with all required arguments
+    bookings, failed_bookings = auto_schedule_courses(course_list, room_list, logs)
 
     # Format results for JSON response
     result = {
-        "logs": logs,  # <-- Include logs in response
-        "bookings": [{
-            "course_id": b.course.course_id,
-            "course_name": b.course.name,
-            "lecturer": b.course.lecturer_id,
-            "room": b.room.name,
-            "day": b.day,
-            "start_time": b.start_time,
-            "end_time": b.end_time
-        } for b in bookings],
-        "failed_bookings": failed_bookings
+        "bookings": [  # ✅ Scheduled timetable data
+            {
+                "course_id": b.course.course_id,
+                "course_name": b.course.name,
+                "lecturer": b.course.lecturer_id,
+                "room": b.room.name,
+                "day": b.day,
+                "start_time": b.start_time,
+                "end_time": b.end_time
+            }
+            for b in bookings
+        ],
+        "failed_bookings": failed_bookings,  # ✅ Failed scheduling attempts
+        "logs": logs  # ✅ Include logs in the response
     }
 
     return jsonify(result), 200
-
 
 if __name__ == '__main__':
     with app.app_context():

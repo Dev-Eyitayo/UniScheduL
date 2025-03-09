@@ -117,7 +117,7 @@ def is_lecturer_available(lecturer_id, bookings, day, start_time, end_time):
                 return False  # Conflict found
     return True  # Lecturer is available
 
-def auto_schedule_courses(courses, rooms, logs):
+def auto_schedule_courses(courses, rooms, changes_logs):
     bookings = []
     failed_bookings = []  # Store failed scheduling attempts
     booking_id_counter = 1
@@ -129,7 +129,7 @@ def auto_schedule_courses(courses, rooms, logs):
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
 
                 if alt_room and alt_timeslot:
-                    logs.append(f"⚠️ {course.name} originally planned on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} has moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to Lecturer conflict")
+                    changes_logs.append(f"⚠️ {course.name} originally planned on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} has moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to Lecturer conflict")
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,
@@ -141,7 +141,6 @@ def auto_schedule_courses(courses, rooms, logs):
                     bookings.append(new_booking)
                     booking_id_counter += 1
                 else:
-                    logs.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to Lecturer conflict")
                     failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to Lecturer conflict")
                 continue
 
@@ -162,7 +161,7 @@ def auto_schedule_courses(courses, rooms, logs):
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
 
                 if alt_room and alt_timeslot:
-                    logs.append(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
+                    changes_logs.append(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,
@@ -174,7 +173,6 @@ def auto_schedule_courses(courses, rooms, logs):
                     bookings.append(new_booking)
                     booking_id_counter += 1
                 else:
-                    logs.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to {reason}")
                     failed_bookings.append(f"❌ {course.name} on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} failed due to {reason}")
 
     return bookings, failed_bookings
