@@ -50,6 +50,11 @@ def seed_database():
         Lecturer(id=8, name='Dr. Kevin Martinez', department='Physics'),
         Lecturer(id=9, name='Dr. Olivia Wilson', department='Physics'),
         Lecturer(id=10, name='Dr. Daniel Thomas', department='Physics'),
+        
+        # Add Computer Science lecturers here
+        Lecturer(id=11, name='Dr. Richard Green', department='Computer Science'),
+        Lecturer(id=12, name='Dr. Rachel Adams', department='Computer Science'),
+        Lecturer(id=13, name='Dr. Thomas Black', department='Computer Science'),
     ]
     db.session.bulk_save_objects(lecturers)
     
@@ -81,6 +86,13 @@ def seed_database():
         Course(id='PHY301', name='Classical Mechanics II', level=300, num_students=240, lecturer_id=2),
         Course(id='PHY302', name='Advanced Nuclear Physics', level=300, num_students=150, lecturer_id=3),
         Course(id='PHY303', name='Computational Physics', level=300, num_students=180, lecturer_id=5),
+        
+        # Add Computer Science courses here
+        Course(id='CSC101', name='Introduction to Computer Science', level=100, num_students=150, lecturer_id=11),
+        Course(id='CSC102', name='Data Structures', level=100, num_students=130, lecturer_id=12),
+        Course(id='CSC201', name='Algorithms', level=200, num_students=200, lecturer_id=13),
+        Course(id='CSC202', name='Operating Systems', level=200, num_students=180, lecturer_id=11),
+        Course(id='CSC301', name='Database Management Systems', level=300, num_students=220, lecturer_id=12),
     ]
     db.session.bulk_save_objects(courses)
     
@@ -95,6 +107,13 @@ def seed_database():
         TimeSlot(course_id='PHY301', day='Monday', start_time='08:00', end_time='10:00'),
         TimeSlot(course_id='PHY302', day='Tuesday', start_time='10:00', end_time='12:00'),
         TimeSlot(course_id='PHY303', day='Wednesday', start_time='12:00', end_time='14:00'),
+        
+        # Add time slots for Computer Science courses
+        TimeSlot(course_id='CSC101', day='Monday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC102', day='Monday', start_time='10:00', end_time='12:00'),
+        TimeSlot(course_id='CSC201', day='Tuesday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC202', day='Wednesday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC301', day='Thursday', start_time='08:00', end_time='10:00'),
     ]
     db.session.bulk_save_objects(time_slots)
     
