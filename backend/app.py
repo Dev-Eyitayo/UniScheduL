@@ -156,18 +156,32 @@ def get_courses():
 @app.route('/api/courses', methods=['POST'])
 def add_course():
     data = request.json
+
+    # Ensure 'time_slots' is always a list, even if missing
+    time_slots = data.get('time_slots', [])
+
     new_course = Course(
-        id=data['id'], name=data['name'], level=data['level'], 
-        num_students=data['num_students'], lecturer_id=data['lecturer_id']
+        id=data['id'], 
+        name=data['name'], 
+        level=data['level'], 
+        num_students=data['num_students'], 
+        lecturer_id=data['lecturer_id']
     )
     db.session.add(new_course)
-    
-    for slot in data['time_slots']:  # Save time slots
-        new_slot = TimeSlot(course_id=data['id'], day=slot['day'], start_time=slot['start_time'], end_time=slot['end_time'])
+
+    # Only add time slots if they exist
+    for slot in time_slots:
+        new_slot = TimeSlot(
+            course_id=data['id'], 
+            day=slot['day'], 
+            start_time=slot['start_time'], 
+            end_time=slot['end_time']
+        )
         db.session.add(new_slot)
-    
+
     db.session.commit()
     return jsonify({"message": "Course added successfully!"}), 201
+
 
 # Edit a course
 @app.route('/api/courses/<string:course_id>', methods=['PUT'])
