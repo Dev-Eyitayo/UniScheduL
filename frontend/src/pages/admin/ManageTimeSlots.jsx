@@ -39,7 +39,8 @@ export default function ManageTimeSlots() {
     const selected = e.target.value;
     setSelectedCourse(selected);
     setFilteredSlots(selected ? timeSlots.filter(slot => slot.course_id === selected) : timeSlots);
-  };
+};
+
 
   // 📌 Handle Form Submit (Add or Update)
   const handleSubmit = async (e) => {
@@ -72,8 +73,13 @@ export default function ManageTimeSlots() {
   // 📌 Handle Delete Time Slot
   const handleDelete = async (id) => {
     const res = await fetch(`http://127.0.0.1:5000/api/timeslots/${id}`, { method: "DELETE" });
-    if (res.ok) fetchTimeSlots();
-  };
+    if (res.ok) {
+        await fetchTimeSlots(); // Refresh time slot list after deletion
+    } else {
+        const errorData = await res.json();
+        console.error("Error:", errorData.error);
+    }
+};
 
   return (
     <div className="p-6">
