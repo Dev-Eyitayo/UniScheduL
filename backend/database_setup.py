@@ -2,7 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///unischedule.db'  # Use PostgreSQL/MySQL for production
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///unischedule.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -31,14 +31,14 @@ class TimeSlot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.String(10), db.ForeignKey('course.id'), nullable=False)
     day = db.Column(db.String(10), nullable=False)
-    start_time = db.Column(db.String(5), nullable=False)  # HH:MM format
+    start_time = db.Column(db.String(5), nullable=False)
     end_time = db.Column(db.String(5), nullable=False)
 
 # ---- DATABASE CREATION & SEEDING ---- #
 def seed_database():
     db.create_all()
-    
-    # Lecturers
+
+    # Lecturers (Physics & Computer Science)
     lecturers = [
         Lecturer(id=1, name='Dr. John Doe', department='Physics'),
         Lecturer(id=2, name='Dr. Jane Smith', department='Physics'),
@@ -50,15 +50,17 @@ def seed_database():
         Lecturer(id=8, name='Dr. Kevin Martinez', department='Physics'),
         Lecturer(id=9, name='Dr. Olivia Wilson', department='Physics'),
         Lecturer(id=10, name='Dr. Daniel Thomas', department='Physics'),
-        
-        # Add Computer Science lecturers here
+
+        # Computer Science Lecturers
         Lecturer(id=11, name='Dr. Richard Green', department='Computer Science'),
         Lecturer(id=12, name='Dr. Rachel Adams', department='Computer Science'),
         Lecturer(id=13, name='Dr. Thomas Black', department='Computer Science'),
+        Lecturer(id=14, name='Dr. Chris Brown', department='Computer Science'),
+        Lecturer(id=15, name='Dr. Sophia Miller', department='Computer Science'),
     ]
     db.session.bulk_save_objects(lecturers)
-    
-    # Rooms
+
+    # Rooms (Existing)
     rooms = [
         Room(id=1, name='Physics Lab 1', capacity=80),
         Room(id=2, name='Physics Lab 2', capacity=100),
@@ -74,20 +76,17 @@ def seed_database():
         Room(id=12, name='Advanced Optics Lab', capacity=90),
     ]
     db.session.bulk_save_objects(rooms)
-    
-    # Courses
+
+    # Courses (Physics & CS)
     courses = [
+        # Physics Courses
         Course(id='PHY101', name='Mechanics', level=100, num_students=120, lecturer_id=1),
         Course(id='PHY102', name='Waves & Optics', level=100, num_students=100, lecturer_id=2),
-        Course(id='PHY103', name='Electricity & Magnetism', level=100, num_students=140, lecturer_id=3),
         Course(id='PHY201', name='Electromagnetic Fields', level=200, num_students=200, lecturer_id=4),
-        Course(id='PHY202', name='Quantum Mechanics', level=200, num_students=180, lecturer_id=1),
-        Course(id='PHY203', name='Thermodynamics', level=200, num_students=120, lecturer_id=5),
         Course(id='PHY301', name='Classical Mechanics II', level=300, num_students=240, lecturer_id=2),
         Course(id='PHY302', name='Advanced Nuclear Physics', level=300, num_students=150, lecturer_id=3),
-        Course(id='PHY303', name='Computational Physics', level=300, num_students=180, lecturer_id=5),
-        
-        # Add Computer Science courses here
+
+        # Computer Science Courses (Intense Conflicts)
         Course(id='CSC101', name='Introduction to Computer Science', level=100, num_students=150, lecturer_id=11),
         Course(id='CSC102', name='Data Structures', level=100, num_students=130, lecturer_id=12),
         Course(id='CSC201', name='Algorithms', level=200, num_students=200, lecturer_id=13),
@@ -95,28 +94,24 @@ def seed_database():
         Course(id='CSC301', name='Database Management Systems', level=300, num_students=220, lecturer_id=12),
     ]
     db.session.bulk_save_objects(courses)
-    
-    # TimeSlots
-    time_slots = [
-        TimeSlot(course_id='PHY101', day='Monday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='PHY101', day='Thursday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='PHY102', day='Monday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='PHY103', day='Tuesday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='PHY201', day='Monday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='PHY202', day='Tuesday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='PHY301', day='Monday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='PHY302', day='Tuesday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='PHY303', day='Wednesday', start_time='12:00', end_time='14:00'),
-        
-        # Add time slots for Computer Science courses
-        TimeSlot(course_id='CSC101', day='Monday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='CSC102', day='Monday', start_time='10:00', end_time='12:00'),
-        TimeSlot(course_id='CSC201', day='Tuesday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='CSC202', day='Wednesday', start_time='08:00', end_time='10:00'),
-        TimeSlot(course_id='CSC301', day='Thursday', start_time='08:00', end_time='10:00'),
-    ]
+
+    # MONDAY to FRIDAY with brutal conflicts
+    time_slots = []
+    for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
+        for time in [('08:00', '10:00'), ('10:00', '12:00'), ('12:00', '14:00'), ('14:00', '16:00')]:
+            time_slots.extend([
+                TimeSlot(course_id='PHY101', day=day, start_time=time[0], end_time=time[1]),
+                TimeSlot(course_id='PHY102', day=day, start_time=time[0], end_time=time[1]),  # Conflict
+                TimeSlot(course_id='CSC101', day=day, start_time=time[0], end_time=time[1]),  # Conflict
+                TimeSlot(course_id='PHY201', day=day, start_time=time[1], end_time='14:00'),
+                TimeSlot(course_id='PHY301', day=day, start_time=time[1], end_time='14:00'),  # Conflict
+                TimeSlot(course_id='CSC201', day=day, start_time=time[1], end_time='14:00'),  # Conflict
+                TimeSlot(course_id='PHY302', day=day, start_time='14:00', end_time='16:00'),
+                TimeSlot(course_id='CSC202', day=day, start_time='14:00', end_time='16:00'),  # Conflict
+                TimeSlot(course_id='CSC301', day=day, start_time='14:00', end_time='16:00'),  # Conflict
+            ])
     db.session.bulk_save_objects(time_slots)
-    
+
     db.session.commit()
 
 if __name__ == '__main__':
