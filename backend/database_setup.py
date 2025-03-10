@@ -77,7 +77,7 @@ def seed_database():
     ]
     db.session.bulk_save_objects(rooms)
 
-    # Courses (Physics & CS)
+    # Courses (Physics & Computer Science)
     courses = [
         # Physics Courses
         Course(id='PHY101', name='Mechanics', level=100, num_students=120, lecturer_id=1),
@@ -86,7 +86,7 @@ def seed_database():
         Course(id='PHY301', name='Classical Mechanics II', level=300, num_students=240, lecturer_id=2),
         Course(id='PHY302', name='Advanced Nuclear Physics', level=300, num_students=150, lecturer_id=3),
 
-        # Computer Science Courses (Intense Conflicts)
+        # Computer Science Courses
         Course(id='CSC101', name='Introduction to Computer Science', level=100, num_students=150, lecturer_id=11),
         Course(id='CSC102', name='Data Structures', level=100, num_students=130, lecturer_id=12),
         Course(id='CSC201', name='Algorithms', level=200, num_students=200, lecturer_id=13),
@@ -95,21 +95,38 @@ def seed_database():
     ]
     db.session.bulk_save_objects(courses)
 
-    # MONDAY to FRIDAY with brutal conflicts
-    time_slots = []
-    for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
-        for time in [('08:00', '10:00'), ('10:00', '12:00'), ('12:00', '14:00'), ('14:00', '16:00')]:
-            time_slots.extend([
-                TimeSlot(course_id='PHY101', day=day, start_time=time[0], end_time=time[1]),
-                TimeSlot(course_id='PHY102', day=day, start_time=time[0], end_time=time[1]),  # Conflict
-                TimeSlot(course_id='CSC101', day=day, start_time=time[0], end_time=time[1]),  # Conflict
-                TimeSlot(course_id='PHY201', day=day, start_time=time[1], end_time='14:00'),
-                TimeSlot(course_id='PHY301', day=day, start_time=time[1], end_time='14:00'),  # Conflict
-                TimeSlot(course_id='CSC201', day=day, start_time=time[1], end_time='14:00'),  # Conflict
-                TimeSlot(course_id='PHY302', day=day, start_time='14:00', end_time='16:00'),
-                TimeSlot(course_id='CSC202', day=day, start_time='14:00', end_time='16:00'),  # Conflict
-                TimeSlot(course_id='CSC301', day=day, start_time='14:00', end_time='16:00'),  # Conflict
-            ])
+    # Time Slots (Arranged Manually for MAXIMUM Conflict)
+    time_slots = [
+        # MONDAY
+        TimeSlot(course_id='PHY101', day='Monday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC101', day='Monday', start_time='08:00', end_time='10:00'),  # Conflict
+        TimeSlot(course_id='PHY102', day='Monday', start_time='10:00', end_time='12:00'),
+        TimeSlot(course_id='CSC201', day='Monday', start_time='10:00', end_time='12:00'),  # Conflict
+
+        # TUESDAY
+        TimeSlot(course_id='PHY201', day='Tuesday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC301', day='Tuesday', start_time='08:00', end_time='10:00'),  # Conflict
+        TimeSlot(course_id='PHY301', day='Tuesday', start_time='12:00', end_time='14:00'),
+        TimeSlot(course_id='CSC102', day='Tuesday', start_time='12:00', end_time='14:00'),  # Conflict
+
+        # WEDNESDAY
+        TimeSlot(course_id='PHY302', day='Wednesday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC202', day='Wednesday', start_time='08:00', end_time='10:00'),  # Conflict
+        TimeSlot(course_id='PHY101', day='Wednesday', start_time='10:00', end_time='12:00'),
+        TimeSlot(course_id='CSC301', day='Wednesday', start_time='10:00', end_time='12:00'),  # Conflict
+
+        # THURSDAY
+        TimeSlot(course_id='PHY102', day='Thursday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC102', day='Thursday', start_time='08:00', end_time='10:00'),  # Conflict
+        TimeSlot(course_id='PHY201', day='Thursday', start_time='10:00', end_time='12:00'),
+        TimeSlot(course_id='CSC202', day='Thursday', start_time='10:00', end_time='12:00'),  # Conflict
+
+        # FRIDAY
+        TimeSlot(course_id='PHY301', day='Friday', start_time='08:00', end_time='10:00'),
+        TimeSlot(course_id='CSC201', day='Friday', start_time='08:00', end_time='10:00'),  # Conflict
+        TimeSlot(course_id='PHY302', day='Friday', start_time='10:00', end_time='12:00'),
+        TimeSlot(course_id='CSC301', day='Friday', start_time='10:00', end_time='12:00'),  # Conflict
+    ]
     db.session.bulk_save_objects(time_slots)
 
     db.session.commit()
