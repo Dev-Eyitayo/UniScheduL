@@ -13,15 +13,11 @@ export default function OptimizedSchedule() {
     try {
       const res = await fetch("http://127.0.0.1:5000/api/run-algorithm");
       if (!res.ok) throw new Error("Failed to run the algorithm");
-
+      
       const data = await res.json();
       setLogs(data.logs);
       setSchedule(data.bookings);
       setFailedBookings(data.failed_bookings);
-
-      // Store data in localStorage for GeneratePDF.jsx
-      localStorage.setItem("schedule", JSON.stringify(data.bookings));
-      localStorage.setItem("failedBookings", JSON.stringify(data.failed_bookings));
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -33,15 +29,12 @@ export default function OptimizedSchedule() {
     setLogs([]);
     setSchedule([]);
     setFailedBookings([]);
-    localStorage.removeItem("schedule");
-    localStorage.removeItem("failedBookings");
   };
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">📅 Run Scheduling Algorithm</h2>
 
-      {/* Buttons */}
       <div className="mb-4">
         <button
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
@@ -61,7 +54,7 @@ export default function OptimizedSchedule() {
             </button>
             <button
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-              onClick={() => navigate("/generate-pdf")}
+              onClick={() => navigate("/generate-pdf", { state: { schedule, failedBookings } })}
             >
               📄 Generate PDF
             </button>
@@ -69,7 +62,6 @@ export default function OptimizedSchedule() {
         )}
       </div>
 
-      {/* Logs Section */}
       {logs.length > 0 && (
         <div className="mt-6 bg-gray-100 p-4 rounded">
           <h3 className="text-lg font-semibold mb-2">📝 Algorithm Logs:</h3>
@@ -83,7 +75,6 @@ export default function OptimizedSchedule() {
         </div>
       )}
 
-      {/* Display Timetable */}
       {schedule.length > 0 && (
         <div className="mt-6 bg-gray-100 p-4 rounded">
           <h3 className="text-lg font-semibold mb-2">📅 Final Room Schedule:</h3>
@@ -105,7 +96,6 @@ export default function OptimizedSchedule() {
         </div>
       )}
 
-      {/* Failed Bookings Section */}
       {failedBookings.length > 0 && (
         <div className="mt-6 bg-red-100 p-4 rounded">
           <h3 className="text-lg font-semibold text-red-700 mb-2">🚨 Failed Scheduling Attempts:</h3>
