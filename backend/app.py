@@ -299,7 +299,6 @@ def get_timetable():
 
 # API Algorithm Endpoint
 @app.route('/api/run-algorithm', methods=['GET'])
-@app.route('/api/run-algorithm', methods=['GET'])
 def run_algorithm():
     """Fetches timetable data, runs the scheduling algorithm, and returns results"""
     
@@ -310,9 +309,14 @@ def run_algorithm():
     # Convert data into algorithm-readable format
     room_list = [AlgoRoom(r.id, r.name, r.capacity) for r in rooms]
     course_list = [
-        AlgoCourse(c.id, c.name, c.level, c.num_students, [
-            AlgoTimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots
-        ], c.lecturer_id) for c in courses
+        AlgoCourse(
+            c.id, 
+            c.name, 
+            c.level, 
+            c.num_students, 
+            [AlgoTimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots], 
+            c.lecturer_id
+        ) for c in courses
     ]
 
     # Initialize logs
@@ -321,13 +325,16 @@ def run_algorithm():
     # Run the scheduling algorithm with all required arguments
     bookings, failed_bookings = auto_schedule_courses(course_list, room_list, logs)
 
+    # Fetch lecturer names for lookup
+    lecturer_lookup = {lec.id: lec.name for lec in Lecturer.query.all()}  # ✅ Create a mapping of lecturer ID -> Name
+
     # Format results for JSON response
     result = {
         "bookings": [  # ✅ Scheduled timetable data
             {
                 "course_id": b.course.course_id,
                 "course_name": b.course.name,
-                "lecturer": b.course.lecturer_id,
+                "lecturer": lecturer_lookup.get(b.course.lecturer_id, "Unknown Lecturer"),  # ✅ Get lecturer name
                 "room": b.room.name,
                 "day": b.day,
                 "start_time": b.start_time,

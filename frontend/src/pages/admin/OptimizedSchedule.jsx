@@ -87,7 +87,7 @@ export default function OptimizedSchedule() {
                   .sort((a, b) => a.start_time.localeCompare(b.start_time))
                   .map((entry, index) => (
                     <li key={index} className="border-b py-2">
-                      📌 <strong>{entry.start_time} - {entry.end_time}</strong>: {entry.course_name} by Lecturer {entry.lecturer} → Room: <strong>{entry.room}</strong>
+                      📌 <strong>{entry.start_time} - {entry.end_time}</strong>: {entry.course_name} by {entry.lecturer} → Room: <strong>{entry.room}</strong>
                     </li>
                   ))}
               </ul>
