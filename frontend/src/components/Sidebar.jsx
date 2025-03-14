@@ -1,33 +1,38 @@
 import { Link } from "react-router-dom";
 import { HomeIcon, BookOpenIcon, ClockIcon, UserIcon, BuildingLibraryIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <aside className="w-64 bg-gray-900 text-white min-h-screen p-5">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
+    <aside className={`bg-gray-900 text-white p-5 transition-all duration-300 ${collapsed ? "w-20" : "w-64"} min-h-screen`}>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className={`text-2xl font-bold transition-opacity ${collapsed ? "opacity-0" : "opacity-100"}`}>Admin Panel</h1>
+        <button onClick={() => setCollapsed(!collapsed)} className="text-gray-400 hover:text-white transition">
+          {collapsed ? "▶" : "◀"}
+        </button>
+      </div>
+
       <nav className="space-y-2">
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/admin">
-          <HomeIcon className="w-5 h-5" /> Dashboard
+          <HomeIcon className="w-5 h-5" /> {!collapsed && "Dashboard"}
         </Link>
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/admin/courses">
-          <BookOpenIcon className="w-5 h-5" /> Manage Courses
+          <BookOpenIcon className="w-5 h-5" /> {!collapsed && "Manage Courses"}
         </Link>
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/admin/rooms">
-          <BuildingLibraryIcon className="w-5 h-5" /> Manage Rooms
+          <BuildingLibraryIcon className="w-5 h-5" /> {!collapsed && "Manage Rooms"}
         </Link>
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/admin/timeslots">
-          <ClockIcon className="w-5 h-5" /> Manage Time Slots
+          <ClockIcon className="w-5 h-5" /> {!collapsed && "Manage Time Slots"}
         </Link>
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/admin/lecturers">
-          <UserIcon className="w-5 h-5" /> Manage Lecturers
+          <UserIcon className="w-5 h-5" /> {!collapsed && "Manage Lecturers"}
         </Link>
         <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md font-bold" to="/admin/timetable">
-          <CalendarIcon className="w-5 h-5" /> View Timetable
+          <CalendarIcon className="w-5 h-5" /> {!collapsed && "View Timetable"}
         </Link>
-        <Link className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md" to="/optimized-timetable">
-          <ClockIcon className="w-5 h-5" /> Optimized Timetable
-        </Link>
-
       </nav>
     </aside>
   );
