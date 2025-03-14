@@ -447,6 +447,25 @@ def generate_pdf():
 
     return send_file(pdf_output_path, as_attachment=True)
 
+@app.route('/api/dashboard-stats', methods=['GET'])
+def get_dashboard_stats():
+    """Fetch summary statistics for the dashboard."""
+    return jsonify({
+        "courses": Course.query.count(),
+        "lecturers": Lecturer.query.count(),
+        "rooms": Room.query.count(),
+        "timeslots": TimeSlot.query.count(),
+    })
+
+@app.route('/api/recent-logs', methods=['GET'])
+def get_recent_logs():
+    """Fetch recent scheduling logs."""
+    logs = [
+        "📌 Course PHY101 scheduled on Monday 08:00 - 10:00",
+        "⚠️ Conflict: Lecturer Dr. Smith assigned to two courses at the same time!",
+        "📌 New course CSC202 added to the database",
+    ]
+    return jsonify(logs)
 
 if __name__ == '__main__':
     with app.app_context():
