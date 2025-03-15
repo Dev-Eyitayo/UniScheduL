@@ -411,88 +411,100 @@ def get_dashboard_stats():
 
 @app.route("/api/generate-pdf", methods=["POST"])
 def generate_pdf():
-    data = request.json  # The JSON from frontend: { semester, academic_year, department, schedule, failed_bookings }
+    data = request.json
 
-    # 1) Prepare PDF doc in memory
+    # Extract scheduling data
+    schedule = data.get("schedule", [])
+    failed = data.get("failed_bookings", [])
+    semester = data.get("semester", "Semester")
+    academic_year = data.get("academic_year", "Year")
+    department = data.get("department", "Department")
+
+    # 1) Create PDF doc in memory, using LANDSCAPE
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
-    story = []
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),    # <-- ensures a wide orientation
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
 
-    # 2) Title area
+    story = []
     styles = getSampleStyleSheet()
-    title_text = f"{data.get('department', 'Dept')} - {data.get('semester', 'Semester')} ({data.get('academic_year', 'Year')})"
-    story.append(Paragraph(title_text, styles['Title']))
+
+    # 2) Title
+    title_par = Paragraph(f"<b>{department} - {semester} ({academic_year})</b>", styles["Title"])
+    story.append(title_par)
     story.append(Spacer(1, 12))
 
-    # 3) Timetable structure
-    # We assume you have DAYS and HOURS similarly in Python
+    # 3) Build a table for your timetable
     DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00",
-             "13:00", "14:00", "15:00", "16:00", "17:00"]
+    HOURS = [
+        "08:00","09:00","10:00","11:00","12:00",
+        "13:00","14:00","15:00","16:00","17:00"
+    ]
 
-    # Build a table header: 1 row for times
-    # Example: [ "Days", "08:00", "09:00", "10:00", ... ]
+    # Table header (row 0)
     table_data = [["Days"] + HOURS]
 
-    # Fill rows: each row starts with the day, then the cell content for each hour
+    # fill each row with day + cells for each hour
     for day in DAYS:
-        row = [day]  # leftmost cell is the day
+        row = [day]
         for hour in HOURS:
-            # Gather all schedule entries that match this day & hour
-            # We'll say if hour >= start_time and hour < end_time => belongs
+            # gather all classes in [hour, hour+1)
             booked = []
-            for bk in data["schedule"]:
-                if bk["day"] == day and hour >= bk["start_time"] and hour < bk["end_time"]:
-                    # e.g. "PHY101 - Mechanics\nDr. John Doe\nRoom: Lecture Hall A"
-                    details = f"{bk['course_id']} - {bk['course_name']}\n{bk['lecturer']}\nRoom: {bk['room']}"
-                    booked.append(details)
-
-            # Join multiple courses or blank
-            cell_text = "\n\n".join(booked) if booked else ""
-            row.append(cell_text)
+            for b in schedule:
+                if b["day"] == day and hour >= b["start_time"] and hour < b["end_time"]:
+                    text = f"{b['course_id']} - {b['course_name']}\n{b['lecturer']}\nRoom: {b['room']}"
+                    booked.append(text)
+            row.append("\n\n".join(booked) if booked else "")
         table_data.append(row)
 
-    # 4) Create the table
-    table = Table(table_data)
-    # Apply styling 
-    # - First row is times header
-    # - First column is day labels
-    table_style = TableStyle([
-        ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ('BACKGROUND', (0,0), (-1,0), colors.gray),          # top row background
-        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 12),
-        ('BACKGROUND', (0,1), (0,-1), colors.lightgrey),     # leftmost column
-        ('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
+    tbl = Table(table_data, repeatRows=1)
+    # 4) Style the table
+    tbl_style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),   
+        ('FONTSIZE', (0, 1), (-1, -1), 9),    
+        ('LEFTPADDING', (0, 1), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 1), (-1, -1), 3),
+        ('TOPPADDING', (0, 1), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
     ])
-    table.setStyle(table_style)
-
-    story.append(table)
+    tbl.setStyle(tbl_style)
+    story.append(tbl)
     story.append(Spacer(1, 12))
 
-    # 5) If there are failed bookings, list them below
-    if data.get("failed_bookings"):
-        story.append(Paragraph("Failed Scheduling Attempts:", styles['Heading2']))
-        fails = []
-        for fail in data["failed_bookings"]:
-            fails.append([fail])  # each fail as a row with 1 column
-
-        fail_table = Table(fails, colWidths=[700])  # or so, adjust width
+    # 5) Display failed bookings if any
+    if failed:
+        story.append(Paragraph("Failed Scheduling Attempts:", styles["Heading2"]))
+        fails_data = []
+        for f in failed:
+            fails_data.append([f])
+        fail_table = Table(fails_data, colWidths=[700])
         fail_table.setStyle(TableStyle([
-            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('BACKGROUND', (0,0), (-1,0), colors.red),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
             ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-            ('FONTSIZE', (0,0), (-1,-1), 10),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-            ('BACKGROUND', (0,0), (-1,-1), colors.redisea),
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ]))
         story.append(fail_table)
 
-    # 6) Build and return the PDF
+    # Build & return
     doc.build(story)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Optimized_Timetable.pdf", mimetype="application/pdf")
+    return send_file(buffer, as_attachment=True, download_name="Optimized_Schedule.pdf", mimetype="application/pdf")
 
 @app.route('/api/recent-logs', methods=['GET'])
 def get_recent_logs():
