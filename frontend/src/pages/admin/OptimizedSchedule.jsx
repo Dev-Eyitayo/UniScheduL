@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router
+import axios from "axios";
 
 // You can customize these as needed
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -13,8 +14,7 @@ export default function OptimizedSchedule() {
   const [schedule, setSchedule] = useState([]);
   const [failedBookings, setFailedBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   // Run the scheduling algorithm
   const runAlgorithm = async () => {
@@ -39,6 +39,35 @@ export default function OptimizedSchedule() {
     setSchedule([]);
     setFailedBookings([]);
   };
+
+  const generatePDF = async () => {
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/api/generate-pdf",
+        {
+          semester: "Fall 2025",
+          academic_year: "2025/2026",
+          department: "Physics",
+          schedule: schedule,
+          failed_bookings: failedBookings,
+        },
+        { responseType: "blob" }
+      );
+
+      // Convert response into a downloadable file
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Optimized_Schedule.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
 
   // Helper: check if an hour (e.g. "09:00") is within [start, end)
   const isWithinTimeSlot = (hour, start, end) => {
@@ -73,7 +102,7 @@ export default function OptimizedSchedule() {
             </button>
             <button
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-              onClick={() => navigate("/generate-pdf", { state: { schedule, failedBookings } })}
+              onClick={generatePDF}
             >
               📄 Generate PDF
             </button>
