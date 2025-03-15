@@ -474,7 +474,7 @@ def generate_pdf():
         ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey),
         ('ALIGN', (0, 1), (0, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),   
-        ('FONTSIZE', (0, 1), (-1, -1), 9),    
+        ('FONTSIZE', (0, 1), (-1, -1), 5),    
         ('LEFTPADDING', (0, 1), (-1, -1), 3),
         ('RIGHTPADDING', (0, 1), (-1, -1), 3),
         ('TOPPADDING', (0, 1), (-1, -1), 3),
@@ -496,7 +496,7 @@ def generate_pdf():
             ('BACKGROUND', (0,0), (-1,0), colors.red),
             ('TEXTCOLOR', (0,0), (-1,0), colors.white),
             ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('FONTSIZE', (0,0), (-1,-1), 6),
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ]))
         story.append(fail_table)
