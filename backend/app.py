@@ -409,73 +409,52 @@ def get_dashboard_stats():
         "timeslots": TimeSlot.query.count(),
     })
 
-@app.route("/api/generate-pdf", methods=["POST"])
+@app.route('/api/generate-pdf', methods=['POST'])
 def generate_pdf():
-    data = request.json  # Get schedule data from frontend
+    data = request.json  # Schedule data from frontend
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
-    elements = []
-
-    # Title
-    title = f"{data.get('department', 'Department')} - {data.get('semester', 'Semester')} ({data.get('academic_year', 'Year')})"
-    elements.append(Table([[title]], colWidths=[500], style=[
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 16),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-    ]))
-
-    # Table Headers
-    table_data = [["Day", "Start Time", "End Time", "Course", "Lecturer", "Room"]]
+    pdf_filename = "Optimized_Timetable.pdf"
+    pdf_path = os.path.join(os.getcwd(), pdf_filename)
     
-    # Add Schedule Data
-    for entry in data["schedule"]:
-        table_data.append([
-            entry["day"],
-            entry["start_time"],
-            entry["end_time"],
-            entry["course_name"],
-            entry["lecturer"],
-            entry["room"]
-        ])
+    doc = SimpleDocTemplate(pdf_path, pagesize=landscape(letter))
+    
+    # Define the table structure
+    DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00", 
+             "13:00", "14:00", "15:00", "16:00", "17:00"]
+    
+    table_data = [["Days"] + HOURS]  # Header row
+    
+    for day in DAYS:
+        row = [day]  # Start with the day
+        for hour in HOURS:
+            # Find course in this time slot
+            booked_courses = [
+                f"{b['course_id']} - {b['course_name']}\n{b['lecturer']}\nRoom: {b['room']}"
+                for b in data['schedule']
+                if b['day'] == day and hour >= b['start_time'] and hour < b['end_time']
+            ]
+            row.append("\n".join(booked_courses) if booked_courses else "")  # Add course details or empty cell
+        table_data.append(row)
 
-    # Table Styling
-    table = Table(table_data, colWidths=[100, 80, 80, 180, 150, 120])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-
-    elements.append(table)
-
-    # Failed Bookings
-    if data["failed_bookings"]:
-        elements.append(Table([["Failed Scheduling Attempts"]], colWidths=[500], style=[
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 14),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-        ]))
-
-        failed_table = Table([[entry] for entry in data["failed_bookings"]], colWidths=[500])
-        failed_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ]))
-        elements.append(failed_table)
-
-    doc.build(elements)
-    buffer.seek(0)
-
-    return send_file(buffer, as_attachment=True, download_name="Optimized_Schedule.pdf", mimetype="application/pdf")
+    # Create table
+    table = Table(table_data)
+    
+    # Apply styling
+    style = TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),  # Header background
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center align text
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),  # Header font bold
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),  # Header padding
+        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),  # Body background
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)  # Add grid lines
+    ])
+    
+    table.setStyle(style)
+    doc.build([table])  # Build the PDF
+    
+    return send_file(pdf_path, as_attachment=True)
 
 @app.route('/api/recent-logs', methods=['GET'])
 def get_recent_logs():
