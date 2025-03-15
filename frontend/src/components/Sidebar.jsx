@@ -6,6 +6,7 @@ import {
   UserIcon,
   BuildingLibraryIcon,
   CalendarIcon,
+  AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -66,6 +67,12 @@ export default function Sidebar() {
             to="/admin/timetable"
           >
             <CalendarIcon className="w-5 h-5" /> {!collapsed && "View Timetable"}
+          </Link>
+          <Link
+            className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
+            to="/optimized-timetable"
+          >
+            <AdjustmentsHorizontalIcon className="w-5 h-5" /> {!collapsed && "Optimized Timetable"}
           </Link>
         </nav>
       </aside>
