@@ -1,11 +1,14 @@
-import io
+from io import BytesIO
 from flask import Flask, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from scheduler import auto_schedule_courses 
 from algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend interaction
@@ -396,57 +399,6 @@ def format_schedule_for_pdf(bookings, failed_bookings):
 
     return schedule_by_day, formatted_failed_bookings
 
-
-@app.route('/api/generate-pdf', methods=['POST'])
-def generate_pdf():
-    data = request.json
-    semester = data.get("semester", "Unknown Semester")
-    academic_year = data.get("academic_year", "Unknown Year")
-    department = data.get("department", "Unknown Department")
-    bookings = data.get("schedule", [])
-    failed_bookings = data.get("failed_bookings", [])
-
-    # Format the schedule properly
-    schedule_by_day, formatted_failed_bookings = format_schedule_for_pdf(bookings, failed_bookings)
-
-    # Create PDF
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", style='B', size=16)
-    pdf.cell(200, 10, f"{department} - {semester} ({academic_year})", ln=True, align='L')
-    pdf.ln(5)
-    
-    # Final Room Schedule Section
-    pdf.set_font("Arial", style='B', size=12)
-    pdf.cell(200, 10, "📅 Final Room Schedule:", ln=True)
-    pdf.ln(3)
-    
-    pdf.set_font("Arial", size=10)
-    for day in schedule_by_day:
-        if schedule_by_day[day]:
-            pdf.set_font("Arial", style='B', size=11)
-            pdf.cell(200, 8, f"📌 {day}", ln=True)
-            pdf.set_font("Arial", size=10)
-            for entry in schedule_by_day[day]:
-                pdf.cell(200, 7, entry, ln=True)
-            pdf.ln(3)
-
-    # Failed Scheduling Attempts Section
-    if formatted_failed_bookings:
-        pdf.set_font("Arial", style='B', size=12)
-        pdf.cell(200, 10, "🚨 Failed Scheduling Attempts:", ln=True)
-        pdf.ln(3)
-        pdf.set_font("Arial", size=10)
-        for failure in formatted_failed_bookings:
-            pdf.cell(200, 7, failure, ln=True)
-    
-    # Save PDF
-    pdf_output_path = "generated_schedule.pdf"
-    pdf.output(pdf_output_path)
-
-    return send_file(pdf_output_path, as_attachment=True)
-
 @app.route('/api/dashboard-stats', methods=['GET'])
 def get_dashboard_stats():
     """Fetch summary statistics for the dashboard."""
@@ -456,6 +408,74 @@ def get_dashboard_stats():
         "rooms": Room.query.count(),
         "timeslots": TimeSlot.query.count(),
     })
+
+@app.route("/api/generate-pdf", methods=["POST"])
+def generate_pdf():
+    data = request.json  # Get schedule data from frontend
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+    elements = []
+
+    # Title
+    title = f"{data.get('department', 'Department')} - {data.get('semester', 'Semester')} ({data.get('academic_year', 'Year')})"
+    elements.append(Table([[title]], colWidths=[500], style=[
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 16),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+    ]))
+
+    # Table Headers
+    table_data = [["Day", "Start Time", "End Time", "Course", "Lecturer", "Room"]]
+    
+    # Add Schedule Data
+    for entry in data["schedule"]:
+        table_data.append([
+            entry["day"],
+            entry["start_time"],
+            entry["end_time"],
+            entry["course_name"],
+            entry["lecturer"],
+            entry["room"]
+        ])
+
+    # Table Styling
+    table = Table(table_data, colWidths=[100, 80, 80, 180, 150, 120])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    elements.append(table)
+
+    # Failed Bookings
+    if data["failed_bookings"]:
+        elements.append(Table([["Failed Scheduling Attempts"]], colWidths=[500], style=[
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 14),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ]))
+
+        failed_table = Table([[entry] for entry in data["failed_bookings"]], colWidths=[500])
+        failed_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(failed_table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="Optimized_Schedule.pdf", mimetype="application/pdf")
 
 @app.route('/api/recent-logs', methods=['GET'])
 def get_recent_logs():
