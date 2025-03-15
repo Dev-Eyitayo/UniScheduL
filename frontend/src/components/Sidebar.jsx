@@ -36,43 +36,43 @@ export default function Sidebar() {
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/admin"
           >
-            <HomeIcon className="w-5 h-5" /> {!collapsed && "Dashboard"}
+            <HomeIcon className="w-10 h-10" /> {!collapsed && "Dashboard"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/admin/courses"
           >
-            <BookOpenIcon className="w-5 h-5" /> {!collapsed && "Manage Courses"}
+            <BookOpenIcon className="w-10 h-10" /> {!collapsed && "Manage Courses"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/admin/rooms"
           >
-            <BuildingLibraryIcon className="w-5 h-5" /> {!collapsed && "Manage Rooms"}
+            <BuildingLibraryIcon className="w-10 h-10" /> {!collapsed && "Manage Rooms"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/admin/timeslots"
           >
-            <ClockIcon className="w-5 h-5" /> {!collapsed && "Manage Time Slots"}
+            <ClockIcon className="w-10 h-10" /> {!collapsed && "Manage Time Slots"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/admin/lecturers"
           >
-            <UserIcon className="w-5 h-5" /> {!collapsed && "Manage Lecturers"}
+            <UserIcon className="w-10 h-10" /> {!collapsed && "Manage Lecturers"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md font-bold"
             to="/admin/timetable"
           >
-            <CalendarIcon className="w-5 h-5" /> {!collapsed && "View Timetable"}
+            <CalendarIcon className="w-10 h-10" /> {!collapsed && "View Timetable"}
           </Link>
           <Link
             className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-md"
             to="/optimized-timetable"
           >
-            <AdjustmentsHorizontalIcon className="w-5 h-5" /> {!collapsed && "Optimized Timetable"}
+            <AdjustmentsHorizontalIcon className="w-10 h-10" /> {!collapsed && "Optimized Timetable"}
           </Link>
         </nav>
       </aside>
