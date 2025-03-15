@@ -53,7 +53,7 @@ export default function OptimizedSchedule() {
         },
         { responseType: "blob" }
       );
-
+  
       // Convert response into a downloadable file
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
@@ -67,7 +67,7 @@ export default function OptimizedSchedule() {
       console.error("Error generating PDF:", error);
     }
   };
-
+  
 
   // Helper: check if an hour (e.g. "09:00") is within [start, end)
   const isWithinTimeSlot = (hour, start, end) => {
