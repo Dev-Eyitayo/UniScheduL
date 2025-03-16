@@ -1,3 +1,4 @@
+import docx
 from io import BytesIO
 from flask import Flask, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -6,6 +7,7 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+from docx.shared import Inches
 from scheduler import auto_schedule_courses 
 from algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
 
@@ -409,8 +411,8 @@ def get_dashboard_stats():
         "timeslots": TimeSlot.query.count(),
     })
 
-@app.route("/api/generate-pdf", methods=["POST"])
-def generate_pdf():
+# @app.route("/api/generate-pdf", methods=["POST"])
+# def generate_pdf():
     data = request.json
 
     # Extract scheduling data
@@ -505,6 +507,141 @@ def generate_pdf():
     doc.build(story)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="Optimized_Schedule.pdf", mimetype="application/pdf")
+
+@app.route("/api/export-file", methods=["POST"])
+def export_file():
+    data = request.json
+    file_format = data.get("format", "pdf")  # "pdf" or "docx"
+
+    # Extract the fields
+    schedule = data.get("schedule", [])
+    failed   = data.get("failed_bookings", [])
+    semester = data.get("semester", "Semester")
+    year     = data.get("academic_year", "Year")
+    dept     = data.get("department", "Department")
+
+    if file_format == "pdf":
+        return generate_pdf(schedule, failed, semester, year, dept)
+    else:
+        return generate_docx(schedule, failed, semester, year, dept)
+
+def generate_pdf(schedule, failed, semester, year, dept):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Title
+    title_par = Paragraph(f"<b>{dept} - {semester} ({year})</b>", styles["Title"])
+    story.append(title_par)
+    story.append(Spacer(1, 12))
+
+    # Build a table
+    DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"]
+    table_data = [["Days"] + HOURS]
+    for day in DAYS:
+        row = [day]
+        for hour in HOURS:
+            booked = []
+            for b in schedule:
+                if b["day"] == day and hour >= b["start_time"] and hour < b["end_time"]:
+                    txt = f"{b['course_id']} - {b['course_name']}\n{b['lecturer']}\nRoom: {b['room']}"
+                    booked.append(txt)
+            row.append("\n\n".join(booked) if booked else "")
+        table_data.append(row)
+
+    tbl = Table(table_data, repeatRows=1)
+    style = TableStyle([
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+        ("BACKGROUND", (0,0), (-1,0), colors.gray),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
+        ("ALIGN", (0,0), (-1,0), "CENTER"),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("FONTSIZE", (0,0), (-1,0), 11),
+        ("BACKGROUND", (0,1), (0,-1), colors.lightgrey),
+        ("ALIGN", (0,1), (0,-1), "CENTER"),
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("FONTSIZE", (0,1), (-1,-1), 9),
+    ])
+    tbl.setStyle(style)
+    story.append(tbl)
+
+    # Failed
+    if failed:
+        story.append(Spacer(1, 12))
+        story.append(Paragraph("Failed Scheduling Attempts:", styles["Heading2"]))
+        fails_data = []
+        for f in failed:
+            fails_data.append([f])
+        fail_table = Table(fails_data, colWidths=[700])
+        fail_table.setStyle(TableStyle([
+            ('GRID',(0,0),(-1,-1),0.5,colors.black),
+            ('BACKGROUND',(0,0),(-1,0),colors.red),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('FONTNAME',(0,0),(-1,-1),'Helvetica'),
+            ('FONTSIZE',(0,0),(-1,-1),9),
+            ('VALIGN',(0,0),(-1,-1),'TOP'),
+        ]))
+        story.append(fail_table)
+
+    doc.build(story)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True,
+                     download_name="Optimized_Schedule.pdf",
+                     mimetype="application/pdf")
+
+def generate_docx(schedule, failed, semester, year, dept):
+    # We'll build a .docx in memory
+    doc = docx.Document()
+
+    doc.add_heading(f"{dept} - {semester} ({year})", 0)
+
+    DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    HOURS = ["08:00","09:00","10:00","11:00","12:00",
+             "13:00","14:00","15:00","16:00","17:00"]
+
+    # Create table with rows = 1 + len(DAYS), columns = 1 + len(HOURS)
+    rows = 1 + len(DAYS)
+    cols = 1 + len(HOURS)
+    table = doc.add_table(rows=rows, cols=cols)
+    table.style = 'Table Grid'
+
+    # First row: hour headers
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = "Days"
+    for i, hour in enumerate(HOURS):
+        hdr_cells[i+1].text = hour
+
+    # Fill day labels in first column
+    for r, day in enumerate(DAYS, start=1):
+        day_cell = table.cell(r, 0)
+        day_cell.text = day
+
+    # Fill in each cell
+    for r, day in enumerate(DAYS, start=1):
+        for c, hour in enumerate(HOURS, start=1):
+            found = []
+            for b in schedule:
+                if b["day"] == day and hour >= b["start_time"] and hour < b["end_time"]:
+                    text = f"{b['course_id']} - {b['course_name']}\n{b['lecturer']}\nRoom: {b['room']}"
+                    found.append(text)
+            cell_text = "\n\n".join(found) if found else ""
+            table.cell(r, c).text = cell_text
+
+    if failed:
+        doc.add_heading("Failed Scheduling Attempts:", level=2)
+        for f in failed:
+            doc.add_paragraph(f, style='List Bullet')
+
+    # Save to memory
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True,
+                     download_name="Optimized_Schedule.docx",
+                     mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
 @app.route('/api/recent-logs', methods=['GET'])
 def get_recent_logs():
