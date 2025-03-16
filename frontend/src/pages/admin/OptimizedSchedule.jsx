@@ -5,12 +5,22 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const HOURS = ["08:00","09:00","10:00","11:00","12:00",
               "13:00","14:00","15:00","16:00","17:00"];
 
+// Predefine faculties & sessions
+const FACULTIES = ["Science", "Engineering", "Arts", "Social Sciences", "Education"];
+const SESSIONS = ["2024/2025", "2025/2026", "2026/2027", "2027/2028"];
+
 export default function OptimizedSchedule() {
   const [logs, setLogs] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [failedBookings, setFailedBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Dropdown: user picks a faculty & academic session
+  const [faculty, setFaculty] = useState("");          // or default to "Science"
+  const [academicSession, setAcademicSession] = useState("");  // or default to "2024/2025"
+
+  // For exporting PDF or DOCX
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   // 1) Run scheduling algorithm
   const runAlgorithm = async () => {
@@ -37,27 +47,34 @@ export default function OptimizedSchedule() {
     setFailedBookings([]);
   };
 
-  // 3) Generate file with chosen format: pdf or docx
+  // 3) Generate file with chosen format
   const generateFile = async (format) => {
     try {
       const response = await axios.post(
         "http://127.0.0.1:5000/api/export-file",
         {
-          format: format, // either "pdf" or "docx"
+          format,
+          // existing data
           semester: "Fall 2025",
           academic_year: "2025/2026",
           department: "Physics",
-          schedule: schedule,
+          schedule,
           failed_bookings: failedBookings,
+          // new fields from the dropdowns
+          faculty,
+          session: academicSession,
         },
         { responseType: "blob" }
       );
 
-      // Convert response into a downloadable file
-      let fileType = format === "pdf" ? "application/pdf"
-                                      : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      let fileName = format === "pdf" ? "Optimized_Schedule.pdf"
-                                      : "Optimized_Schedule.docx";
+      let fileType =
+        format === "pdf"
+          ? "application/pdf"
+          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      let fileName =
+        format === "pdf"
+          ? "Optimized_Schedule.pdf"
+          : "Optimized_Schedule.docx";
 
       const blob = new Blob([response.data], { type: fileType });
       const url = window.URL.createObjectURL(blob);
@@ -70,11 +87,11 @@ export default function OptimizedSchedule() {
     } catch (error) {
       console.error("Error generating file:", error);
     } finally {
-      setShowDropdown(false); // close dropdown
+      setShowExportDropdown(false);
     }
   };
 
-  // 4) Helper: check if hour is within a booking's times
+  // Helper: check if an hour is within [start, end)
   const isWithinTimeSlot = (hour, start, end) => {
     const hourNum = parseInt(hour.split(":")[0], 10);
     const startNum = parseInt(start.split(":")[0], 10);
@@ -86,6 +103,38 @@ export default function OptimizedSchedule() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">📅 Optimized Timetable</h2>
 
+      {/* Faculty & Session Fields */}
+      <div className="mb-4 flex gap-6 items-center">
+        <div>
+          <label className="block font-semibold mb-1">Select Faculty:</label>
+          <select
+            className="border p-2 rounded"
+            value={faculty}
+            onChange={(e) => setFaculty(e.target.value)}
+          >
+            <option value="">-- Choose a Faculty --</option>
+            {FACULTIES.map((fac) => (
+              <option key={fac} value={fac}>{fac}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Academic Session:</label>
+          <select
+            className="border p-2 rounded"
+            value={academicSession}
+            onChange={(e) => setAcademicSession(e.target.value)}
+          >
+            <option value="">-- Choose Session --</option>
+            {SESSIONS.map((ses) => (
+              <option key={ses} value={ses}>{ses}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Buttons */}
       <div className="mb-4">
         <button
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
@@ -104,19 +153,15 @@ export default function OptimizedSchedule() {
               Clear Logs 🗑️
             </button>
 
-            {/* 
-               Dropdown trigger: "Export" 
-               When user clicks, it toggles showDropdown 
-            */}
             <div className="relative inline-block">
               <button
-                onClick={() => setShowDropdown(!showDropdown)}
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
               >
                 Export ▼
               </button>
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded">
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded">
                   <button
                     onClick={() => generateFile("pdf")}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-200"
@@ -136,6 +181,7 @@ export default function OptimizedSchedule() {
         )}
       </div>
 
+      {/* Logs Section */}
       {logs.length > 0 && (
         <div className="mt-6 bg-gray-100 p-4 rounded">
           <h3 className="text-lg font-semibold mb-2">📝 Algorithm Logs:</h3>
@@ -147,8 +193,8 @@ export default function OptimizedSchedule() {
                 <li
                   key={index}
                   className={
-                    isWarning ? "text-yellow-600" 
-                    : isError ? "text-red-600" 
+                    isWarning ? "text-yellow-600"
+                    : isError ? "text-red-600"
                     : "text-gray-700"
                   }
                 >
@@ -160,6 +206,7 @@ export default function OptimizedSchedule() {
         </div>
       )}
 
+      {/* Timetable */}
       {schedule.length > 0 && (
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">📅 Final Room Schedule (Optimized)</h3>
@@ -169,7 +216,9 @@ export default function OptimizedSchedule() {
                 <tr className="bg-gray-200">
                   <th className="border px-4 py-2">Days</th>
                   {HOURS.map((hour) => (
-                    <th key={hour} className="border px-4 py-2 min-w-[80px]">{hour}</th>
+                    <th key={hour} className="border px-4 py-2 min-w-[80px]">
+                      {hour}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -179,20 +228,31 @@ export default function OptimizedSchedule() {
                     <td className="border px-4 py-2 font-bold">{day}</td>
                     {HOURS.map((hour) => {
                       const activeBookings = schedule.filter((bk) =>
-                        bk.day === day && isWithinTimeSlot(hour, bk.start_time, bk.end_time)
+                        bk.day === day &&
+                        isWithinTimeSlot(hour, bk.start_time, bk.end_time)
                       );
                       return (
-                        <td key={hour} className="border px-4 py-2 text-center align-top">
+                        <td
+                          key={hour}
+                          className="border px-4 py-2 text-center align-top"
+                        >
                           {activeBookings.length === 0 ? (
                             <span>—</span>
                           ) : (
                             activeBookings.map((bk, idx) => (
-                              <div key={idx} className="bg-blue-100 p-1 mb-2 rounded">
+                              <div
+                                key={idx}
+                                className="bg-blue-100 p-1 mb-2 rounded"
+                              >
                                 <div className="font-bold">
                                   {bk.course_id} - {bk.course_name}
                                 </div>
-                                <div className="text-sm italic">{bk.lecturer}</div>
-                                <div className="text-xs">Room: {bk.room}</div>
+                                <div className="text-sm italic">
+                                  {bk.lecturer}
+                                </div>
+                                <div className="text-xs">
+                                  Room: {bk.room}
+                                </div>
                               </div>
                             ))
                           )}
@@ -207,9 +267,12 @@ export default function OptimizedSchedule() {
         </div>
       )}
 
+      {/* Failed Bookings Section */}
       {failedBookings.length > 0 && (
         <div className="mt-6 bg-red-100 p-4 rounded">
-          <h3 className="text-lg font-semibold text-red-700 mb-2">🚨 Failed Scheduling Attempts:</h3>
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            🚨 Failed Scheduling Attempts:
+          </h3>
           <ul className="list-disc list-inside">
             {failedBookings.map((failure, index) => (
               <li key={index} className="text-red-700">
