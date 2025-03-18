@@ -655,6 +655,90 @@ def get_recent_logs():
     ]
     return jsonify(logs)
 
+
+@app.route("/api/lecturers/<int:lecturer_id>/courses", methods=['GET'])
+def get_lecturer_courses(lecturer_id):
+    """Fetch a lecturer + all assigned courses."""
+    lecturer = Lecturer.query.get(lecturer_id)
+    if not lecturer:
+        return jsonify({"error": "Lecturer not found"}), 404
+    
+    # Build response
+    courses_data = []
+    for c in lecturer.courses:
+        courses_data.append({
+            "id": c.id,
+            "name": c.name,
+            "level": c.level,
+            "num_students": c.num_students
+        })
+
+    return jsonify({
+        "id": lecturer.id,
+        "name": lecturer.name,
+        "department": lecturer.department,
+        "courses": courses_data
+    })
+
+@app.route("/api/lecturers/<int:lecturer_id>/courses", methods=['POST'])
+def add_course_to_lecturer(lecturer_id):
+    """Assign an existing or new course to this lecturer."""
+    data = request.json
+    lecturer = Lecturer.query.get(lecturer_id)
+    if not lecturer:
+        return jsonify({"error": "Lecturer not found"}), 404
+
+    # We expect { "course_id": "...", "name": "...", "level": ..., "num_students": ... }
+    #  If course_id already exists, we reassign the course's lecturer_id
+    #  Otherwise, create new course
+    course_id = data["course_id"]
+    course = Course.query.get(course_id)
+    if course:
+        # Reassign
+        course.lecturer_id = lecturer_id
+        db.session.commit()
+        return jsonify({"message": f"Course {course_id} assigned to lecturer {lecturer_id}"}), 200
+    else:
+        # Create new
+        new_course = Course(
+            id=course_id,
+            name=data["name"],
+            level=data["level"],
+            num_students=data["num_students"],
+            lecturer_id=lecturer_id
+        )
+        db.session.add(new_course)
+        db.session.commit()
+        return jsonify({"message": f"New course {course_id} created & assigned"}), 201
+
+@app.route("/api/lecturers/<int:lecturer_id>/courses/<string:course_id>", methods=['PUT'])
+def update_lecturer_course(lecturer_id, course_id):
+    """Update details of a course belonging to this lecturer."""
+    data = request.json
+    course = Course.query.filter_by(id=course_id, lecturer_id=lecturer_id).first()
+    if not course:
+        return jsonify({"error": "Course not found for this lecturer"}), 404
+    
+    # Update fields
+    course.name = data.get("name", course.name)
+    course.level = data.get("level", course.level)
+    course.num_students = data.get("num_students", course.num_students)
+    db.session.commit()
+    return jsonify({"message": f"Course {course_id} updated"}), 200
+
+@app.route("/api/lecturers/<int:lecturer_id>/courses/<string:course_id>", methods=['DELETE'])
+def remove_course_from_lecturer(lecturer_id, course_id):
+    """Remove a course from this lecturer (set lecturer_id to None or reassign) or delete the course."""
+    course = Course.query.filter_by(id=course_id, lecturer_id=lecturer_id).first()
+    if not course:
+        return jsonify({"error": "Course not found or not assigned to this lecturer"}), 404
+    
+    # Option A: DELETE the course entirely
+    db.session.delete(course)
+    db.session.commit()
+    return jsonify({"message": f"Course {course_id} removed from lecturer {lecturer_id} and deleted."}), 200
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Ensure the database and tables exist
