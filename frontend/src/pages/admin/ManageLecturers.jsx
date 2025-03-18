@@ -1,216 +1,110 @@
 import React, { useEffect, useState } from "react";
+import { fetchLecturers, addLecturer, updateLecturer, deleteLecturer } from "../../api";
 
 export default function ManageLecturers() {
-  const [lecturers, setLecturers] = useState([]);
-  const [selectedLecturer, setSelectedLecturer] = useState(null);
-  const [courses, setCourses] = useState([]);   // Courses for the selected lecturer
+    const [lecturers, setLecturers] = useState([]);
+    const [newLecturer, setNewLecturer] = useState({ name: "", department: "" });
+    const [editingLecturer, setEditingLecturer] = useState(null);
 
-  // For adding/updating a course
-  const [courseForm, setCourseForm] = useState({
-    course_id: "",
-    name: "",
-    level: 100,
-    num_students: 0,
-  });
-  const [isEditing, setIsEditing] = useState(false);
+    useEffect(() => {
+        loadLecturers();
+    }, []);
 
-  // 1) Fetch all lecturers on mount
-  useEffect(() => {
-    fetchLecturers();
-  }, []);
-
-  const fetchLecturers = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/lecturers");
-    const data = await res.json();
-    setLecturers(data);
-  };
-
-  // 2) When user selects a lecturer, fetch that lecturer's courses
-  const handleSelectLecturer = async (lecturer) => {
-    setSelectedLecturer(lecturer);
-    const res = await fetch(`http://127.0.0.1:5000/api/lecturers/${lecturer.id}/courses`);
-    const data = await res.json();
-    setCourses(data.courses || []);
-    setIsEditing(false);
-  };
-
-  // 3) Handle adding or updating a course
-  const handleSubmitCourse = async (e) => {
-    e.preventDefault();
-    if (!selectedLecturer) return alert("Select a lecturer first.");
-
-    if (isEditing) {
-      // Update existing
-      const url = `http://127.0.0.1:5000/api/lecturers/${selectedLecturer.id}/courses/${courseForm.course_id}`;
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(courseForm),
-      });
-      if (res.ok) {
-        alert("Course updated successfully");
-        handleSelectLecturer(selectedLecturer);
-      } else {
-        alert("Error updating course");
-      }
-    } else {
-      // Add new or reassign existing
-      const url = `http://127.0.0.1:5000/api/lecturers/${selectedLecturer.id}/courses`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(courseForm),
-      });
-      if (res.ok) {
-        alert("Course added/reassigned successfully");
-        handleSelectLecturer(selectedLecturer);
-      } else {
-        alert("Error adding course");
-      }
+    async function loadLecturers() {
+        const data = await fetchLecturers();
+        setLecturers(data);
     }
-    setCourseForm({ course_id: "", name: "", level: 100, num_students: 0 });
-    setIsEditing(false);
-  };
 
-  // 4) Edit a course
-  const handleEditCourse = (course) => {
-    setCourseForm({
-      course_id: course.id,
-      name: course.name,
-      level: course.level,
-      num_students: course.num_students,
-    });
-    setIsEditing(true);
-  };
-
-  // 5) Remove a course
-  const handleRemoveCourse = async (course) => {
-    if(!selectedLecturer) return;
-    const confirm = window.confirm(`Remove course ${course.id}?`);
-    if (!confirm) return;
-    const url = `http://127.0.0.1:5000/api/lecturers/${selectedLecturer.id}/courses/${course.id}`;
-    const res = await fetch(url, { method: "DELETE" });
-    if (res.ok) {
-      alert("Course removed");
-      handleSelectLecturer(selectedLecturer);
-    } else {
-      alert("Error removing course");
+    async function handleAddLecturer() {
+        await addLecturer(newLecturer);
+        setNewLecturer({ name: "", department: "" });
+        loadLecturers();
     }
-  };
 
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Manage Lecturers</h2>
+    async function handleUpdateLecturer() {
+        if (editingLecturer) {
+            await updateLecturer(editingLecturer.id, editingLecturer);
+            setEditingLecturer(null);
+            loadLecturers();
+        }
+    }
 
-      {/* Lecturers List */}
-      <div className="flex gap-4">
-        {/* Left Side: Lecturers */}
-        <div className="w-1/3 bg-gray-100 p-4 rounded">
-          <h3 className="text-lg font-semibold mb-2">Lecturers</h3>
-          <ul>
-            {lecturers.map(lect => (
-              <li key={lect.id}>
-                <button
-                  className={`block w-full text-left py-1 px-2 hover:bg-gray-200 ${selectedLecturer?.id === lect.id ? "bg-gray-200" : ""}`}
-                  onClick={() => handleSelectLecturer(lect)}
-                >
-                  {lect.name} ({lect.department})
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+    async function handleDeleteLecturer(id) {
+        await deleteLecturer(id);
+        loadLecturers();
+    }
 
-        {/* Right Side: Selected Lecturer & Courses */}
-        <div className="w-2/3 bg-white p-4 rounded">
-          {selectedLecturer ? (
-            <>
-              <h3 className="text-lg font-semibold mb-2">Courses for {selectedLecturer.name}</h3>
-              {courses.length === 0 ? (
-                <p>No courses assigned.</p>
-              ) : (
-                <table className="border w-full text-left">
-                  <thead className="bg-gray-200">
-                    <tr>
-                      <th className="border px-2 py-1">ID</th>
-                      <th className="border px-2 py-1">Name</th>
-                      <th className="border px-2 py-1">Level</th>
-                      <th className="border px-2 py-1">Students</th>
-                      <th className="border px-2 py-1">Actions</th>
+    return (
+        <div className="p-6">
+            <h1 className="text-2xl font-bold">Manage Lecturers</h1>
+
+            {/* Add Lecturer Form */}
+            <div className="mt-4 flex gap-2">
+                <input
+                    type="text"
+                    placeholder="Name"
+                    className="border px-2 py-1"
+                    value={newLecturer.name}
+                    onChange={(e) => setNewLecturer({ ...newLecturer, name: e.target.value })}
+                />
+                <input
+                    type="text"
+                    placeholder="Department"
+                    className="border px-2 py-1"
+                    value={newLecturer.department}
+                    onChange={(e) => setNewLecturer({ ...newLecturer, department: e.target.value })}
+                />
+                <button onClick={handleAddLecturer} className="bg-green-500 text-white px-3 py-1">Add</button>
+            </div>
+
+            {/* Lecturer Table */}
+            <table className="min-w-full border mt-4">
+                <thead>
+                    <tr className="bg-gray-200">
+                        <th className="border px-4 py-2">ID</th>
+                        <th className="border px-4 py-2">Name</th>
+                        <th className="border px-4 py-2">Department</th>
+                        <th className="border px-4 py-2">Actions</th>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {courses.map(course => (
-                      <tr key={course.id}>
-                        <td className="border px-2 py-1">{course.id}</td>
-                        <td className="border px-2 py-1">{course.name}</td>
-                        <td className="border px-2 py-1">{course.level}</td>
-                        <td className="border px-2 py-1">{course.num_students}</td>
-                        <td className="border px-2 py-1">
-                          <button
-                            className="bg-yellow-400 text-white px-2 py-1 rounded mr-2"
-                            onClick={() => handleEditCourse(course)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                            onClick={() => handleRemoveCourse(course)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
+                </thead>
+                <tbody>
+                    {lecturers.map((lecturer) => (
+                        <tr key={lecturer.id} className="text-center">
+                            <td className="border px-4 py-2">{lecturer.id}</td>
+                            <td className="border px-4 py-2">
+                                {editingLecturer?.id === lecturer.id ? (
+                                    <input
+                                        type="text"
+                                        value={editingLecturer.name}
+                                        onChange={(e) => setEditingLecturer({ ...editingLecturer, name: e.target.value })}
+                                    />
+                                ) : (
+                                    lecturer.name
+                                )}
+                            </td>
+                            <td className="border px-4 py-2">
+                                {editingLecturer?.id === lecturer.id ? (
+                                    <input
+                                        type="text"
+                                        value={editingLecturer.department}
+                                        onChange={(e) => setEditingLecturer({ ...editingLecturer, department: e.target.value })}
+                                    />
+                                ) : (
+                                    lecturer.department
+                                )}
+                            </td>
+                            <td className="border px-4 py-2 flex justify-center gap-2">
+                                {editingLecturer?.id === lecturer.id ? (
+                                    <button onClick={handleUpdateLecturer} className="bg-blue-500 text-white px-3 py-1">Save</button>
+                                ) : (
+                                    <button onClick={() => setEditingLecturer(lecturer)} className="bg-yellow-500 text-white px-3 py-1">Edit</button>
+                                )}
+                                <button onClick={() => handleDeleteLecturer(lecturer.id)} className="bg-red-500 text-white px-3 py-1">Delete</button>
+                            </td>
+                        </tr>
                     ))}
-                  </tbody>
-                </table>
-              )}
-
-              {/* Add / Update Course Form */}
-              <div className="mt-4">
-                <h4 className="text-md font-semibold mb-2">{isEditing ? "Update Course" : "Add New Course / Reassign"}</h4>
-                <form className="flex gap-2 items-center" onSubmit={handleSubmitCourse}>
-                  <input
-                    type="text"
-                    className="border p-2 rounded"
-                    placeholder="Course ID"
-                    value={courseForm.course_id}
-                    onChange={(e) => setCourseForm({ ...courseForm, course_id: e.target.value })}
-                    required
-                  />
-                  <input
-                    type="text"
-                    className="border p-2 rounded"
-                    placeholder="Course Name"
-                    value={courseForm.name}
-                    onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })}
-                    required
-                  />
-                  <input
-                    type="number"
-                    className="border p-2 rounded w-20"
-                    placeholder="Level"
-                    value={courseForm.level}
-                    onChange={(e) => setCourseForm({ ...courseForm, level: Number(e.target.value) })}
-                  />
-                  <input
-                    type="number"
-                    className="border p-2 rounded w-20"
-                    placeholder="Students"
-                    value={courseForm.num_students}
-                    onChange={(e) => setCourseForm({ ...courseForm, num_students: Number(e.target.value) })}
-                  />
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
-                    {isEditing ? "Update" : "Add"}
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <p>Select a lecturer to view courses.</p>
-          )}
+                </tbody>
+            </table>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
