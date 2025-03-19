@@ -11,10 +11,12 @@ import ManageLecturers from "./pages/admin/ManageLecturers";
 import WeeklyTimetable from "./pages/admin/WeeklyTimetable";
 import OptimizedSchedule from "./pages/admin/OptimizedSchedule";
 import GeneratePDF from "./pages/admin/GeneratePDF";
+import Navbar from "./components/Navbar";
 
 export default function App() {
   return (
     <Router>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
