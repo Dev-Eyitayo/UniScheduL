@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
+import AdminLayout from "./components/AdminLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -16,25 +15,21 @@ import GeneratePDF from "./pages/admin/GeneratePDF";
 export default function App() {
   return (
     <Router>
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/rooms" element={<ManageRooms />} />
-            <Route path="/admin/courses" element={<ManageCourses />} />
-            <Route path="/admin/lecturers" element={<ManageLecturers />} />
-            <Route path="/admin/timeslots" element={<ManageTimeSlots />} />
-            <Route path="/admin/timetable" element={<WeeklyTimetable />} />
-            <Route path="/optimized-timetable" element={<OptimizedSchedule />} />
-            <Route path="/generate-pdf" element={<GeneratePDF />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Wrap Admin Routes Inside Layout */}
+        <Route path="/admin/*" element={<AdminLayout> <AdminDashboard /> </AdminLayout>} />
+        <Route path="/admin/rooms" element={<AdminLayout> <ManageRooms /> </AdminLayout>} />
+        <Route path="/admin/courses" element={<AdminLayout> <ManageCourses /> </AdminLayout>} />
+        <Route path="/admin/lecturers" element={<AdminLayout> <ManageLecturers /> </AdminLayout>} />
+        <Route path="/admin/timeslots" element={<AdminLayout> <ManageTimeSlots /> </AdminLayout>} />
+        <Route path="/admin/timetable" element={<AdminLayout> <WeeklyTimetable /> </AdminLayout>} />
+        <Route path="/optimized-timetable" element={<AdminLayout> <OptimizedSchedule /> </AdminLayout>} />
+        <Route path="/generate-pdf" element={<AdminLayout> <GeneratePDF /> </AdminLayout>} />
+      </Routes>
     </Router>
   );
 }

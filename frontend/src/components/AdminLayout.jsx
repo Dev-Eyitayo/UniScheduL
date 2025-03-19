@@ -3,20 +3,27 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 
 export default function AdminLayout({ children }) {
-  // Control sidebar open/close state
+  // Manage sidebar state (open/closed)
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="flex h-screen">
-      {/* Sidebar with dynamic width */}
-      <Sidebar isOpen={sidebarOpen} />
+      {/* Sidebar: Expands and collapses */}
+      <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
-        {/* Fixed Navbar at the top */}
-        <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-
-        {/* Main content with padding to prevent overlap */}
-        <main className="p-4 pt-16 bg-gray-100 flex-1">{children}</main>
+      {/* Main Content: Adjust width dynamically */}
+      <div 
+        className={`flex-1 transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-20"
+        }`}
+      >
+        {/* Navbar */}
+        <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        
+        {/* Main Content */}
+        <main className="p-6 pt-20 bg-gray-100 min-h-screen transition-all duration-300">
+          {children}
+        </main>
       </div>
     </div>
   );
