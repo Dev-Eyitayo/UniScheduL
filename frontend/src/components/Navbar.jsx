@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Bars3Icon } from "@heroicons/react/24/outline";
-import Logo from "../assets/logo.svg";
+import Logo from "../assets/icon.png";
 
 export default function Navbar({ toggleSidebar }) {
   return (
