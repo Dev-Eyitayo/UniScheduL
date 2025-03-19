@@ -7,7 +7,7 @@ export default function PublicLayout({ children }) {
       <Navbar />
       
       {/* Ensure content starts below the navbar */}
-      <main className="pt-16 p-6 bg-gray-100 flex-1">
+      <main className="pt-16  bg-gray-100 flex-1">
         {children}
       </main>
     </div>
