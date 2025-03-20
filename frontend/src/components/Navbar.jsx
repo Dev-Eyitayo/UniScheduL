@@ -20,9 +20,9 @@ export default function Navbar({ toggleSidebar }) {
 
         {/* Nav Links */}
         <div className="hidden md:flex space-x-4">
-          <Link to="/home" className="hover:underline">Home</Link>
+          <Link to="/" className="hover:underline">Home</Link>
           <Link to="/admin" className="hover:underline">Dashboard</Link>
-          <Link to="/login" className="hover:underline">Login</Link>
+          {/* <Link to="/login" className="hover:underline">Login</Link> */}
         </div>
       </div>
     </nav>
