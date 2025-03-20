@@ -1,50 +1,40 @@
+// electron/main.js
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-const isDev = process.env.NODE_ENV === 'development';
-
-// Dev server URL for your React app
-const REACT_DEV_URL = 'http://localhost:5173'; 
-// Or wherever your Vite dev server runs
-
-// Path to index.html in your build folder
-const REACT_PROD_PATH = path.join(
-  __dirname,
-  '..',
-  'frontend',
-  'dist',   // or 'build' if using Create React App
-  'index.html'
-);
+let mainWindow;
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+  mainWindow = new BrowserWindow({
+    width: 1280,
+    height: 800,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
+      nodeIntegration: false,  // Typically off for security reasons
+      contextIsolation: true   // Usually recommended
+    }
   });
 
-  if (isDev) {
-    // Load local dev server in dev mode
-    win.loadURL(REACT_DEV_URL);
-    win.webContents.openDevTools();
-  } else {
-    // Load the production build
-    win.loadURL(`file://${REACT_PROD_PATH}`);
-  }
+  // For DEV: Load your local React dev server
+  mainWindow.loadURL('http://localhost:5173/'); 
+  // For PROD: Load your production build of React
+  // mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
-app.whenReady().then(() => {
-  createWindow();
+app.on('ready', createWindow);
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+// Quit when all windows are closed
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
-// On non-mac, quit on close
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
 });
