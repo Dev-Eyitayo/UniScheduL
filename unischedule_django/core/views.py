@@ -147,3 +147,43 @@ def timeslot_detail(request, pk):
     elif request.method == 'DELETE':
         ts.delete()
         return Response({"message": "Time slot deleted successfully!"})
+
+@api_view(['GET'])
+def get_timetable(request):
+    """Fetch all scheduled courses organized by days"""
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    timetable = {day: [] for day in week_days}
+
+    courses = Course.objects.prefetch_related('time_slots', 'lecturer').all()
+
+    for course in courses:
+        for slot in course.time_slots.all():
+            timetable[slot.day].append({
+                "course_code": course.id,
+                "course_name": course.name,
+                "lecturer": course.lecturer.name,
+                "start_time": slot.start_time,
+                "end_time": slot.end_time,
+                "room": "N/A",  # Placeholder
+            })
+
+    return Response(timetable)
+
+@api_view(['GET'])
+def get_dashboard_stats(request):
+    return Response({
+        "courses": Course.objects.count(),
+        "lecturers": Lecturer.objects.count(),
+        "rooms": Room.objects.count(),
+        "timeslots": TimeSlot.objects.count(),
+    })
+
+@api_view(['GET'])
+def get_recent_logs(request):
+    logs = [
+        "📌 Course PHY101 scheduled on Monday 08:00 - 10:00",
+        "⚠️ Conflict: Lecturer Dr. Smith assigned to two courses at the same time!",
+        "📌 New course CSC202 added to the database",
+    ]
+    return Response(logs)
+
