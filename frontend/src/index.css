@@ -6,3 +6,11 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: #f9fafb;
 }
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
