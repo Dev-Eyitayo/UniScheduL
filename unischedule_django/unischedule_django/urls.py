@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/run-algorithm', views.run_algorithm),
     path('api/dashboard-stats', views.get_dashboard_stats),
     path('api/recent-logs', views.get_recent_logs),
+    path('api/export-file', views.export_file),
 ]
