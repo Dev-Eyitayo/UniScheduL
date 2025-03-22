@@ -189,3 +189,44 @@ def get_recent_logs(request):
     ]
     return Response(logs)
 
+
+@api_view(['GET'])
+def run_algorithm(request):
+    rooms = Room.objects.all()
+    courses = Course.objects.prefetch_related('time_slots').all()
+
+    # Convert to algo format
+    room_list = [AlgoRoom(r.id, r.name, r.capacity) for r in rooms]
+    course_list = [
+        AlgoCourse(
+            c.id,
+            c.name,
+            c.level,
+            c.num_students,
+            [AlgoTimeSlot(ts.day, ts.start_time, ts.end_time) for ts in c.time_slots.all()],
+            c.lecturer_id
+        ) for c in courses
+    ]
+
+    logs = []
+    bookings, failed = auto_schedule_courses(course_list, room_list, logs)
+
+    lecturer_lookup = {l.id: l.name for l in Lecturer.objects.all()}
+
+    result = {
+        "bookings": [
+            {
+                "course_id": b.course.course_id,
+                "course_name": b.course.name,
+                "lecturer": lecturer_lookup.get(b.course.lecturer_id, "Unknown"),
+                "room": b.room.name,
+                "day": b.day,
+                "start_time": b.start_time,
+                "end_time": b.end_time
+            } for b in bookings
+        ],
+        "failed_bookings": failed,
+        "logs": logs
+    }
+
+    return Response(result)
