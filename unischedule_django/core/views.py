@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Lecturer, Room, Course, TimeSlot
 from .serializers import LecturerSerializer, RoomSerializer, CourseSerializer, TimeSlotSerializer
+from scheduler import auto_schedule_courses
+from algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
 
 # ----- LECTURERS -----
 @api_view(['GET', 'POST'])
