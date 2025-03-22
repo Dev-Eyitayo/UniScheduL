@@ -22,14 +22,14 @@ export default function AdminDashboard() {
 
   // Fetch stats for dashboard
   const fetchDashboardStats = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/dashboard-stats");
+    const res = await fetch("http://127.0.0.1:8000/api/dashboard-stats");
     const data = await res.json();
     setStats(data);
   };
 
   // Fetch recent logs
   const fetchRecentLogs = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/recent-logs");
+    const res = await fetch("http://127.0.0.1:8000/api/recent-logs");
     const data = await res.json();
     setLogs(data);
   };
