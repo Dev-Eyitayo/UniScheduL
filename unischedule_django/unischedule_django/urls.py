@@ -5,6 +5,9 @@ from core import views
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    # Signup
+    path('api/signup', views.signup),
+
     # Lecturer APIs
     path('api/lecturers', views.lecturers_view),
     path('api/lecturers/<int:pk>', views.lecturer_detail),

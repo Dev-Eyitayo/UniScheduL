@@ -1,12 +1,94 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import get_user_model
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from .models import Lecturer, Room, Course, TimeSlot
+from .models import Lecturer, Room, Course, TimeSlot, Institution
 from .serializers import LecturerSerializer, RoomSerializer, CourseSerializer, TimeSlotSerializer
 from .scheduler import auto_schedule_courses
 from .algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
 from .export_utils import generate_pdf, generate_docx
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import IntegrityError
+
+
+User = get_user_model()
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
+
+@api_view(['POST'])
+def signup(request):
+    try:
+        institution_name = request.data.get('institution_name')
+        institution_domain = request.data.get('institution_domain')
+        email = request.data.get('admin_email')
+        password = request.data.get('password')
+        name = request.data.get('admin_name')
+
+        # --- Validation ---
+        if not all([institution_name, institution_domain, email, password, name]):
+            return Response({'error': 'All fields are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Ensure Email Domain Matches ---
+        email_domain = email.split('@')[-1]
+        if email_domain != institution_domain:
+            return Response({'error': 'Email domain does not match the institution domain.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Create or Get Institution ---
+        institution, created = Institution.objects.get_or_create(
+            domain=institution_domain,
+            defaults={'name': institution_name}
+        )
+
+        # --- Create Admin User ---
+        user = User.objects.create_user(
+            username=name,
+            email=email,
+            password=password,
+            institution=institution,
+            role='admin'
+        )
+
+        tokens = get_tokens_for_user(user)
+
+        return Response({
+            'message': 'Signup successful',
+            'user': {
+                'email': user.email,
+                'role': user.role,
+                'institution_id': institution.id,
+                'institution_name': institution.name
+            },
+            'tokens': tokens
+        }, status=status.HTTP_201_CREATED)
+
+    except IntegrityError:
+        return Response({'error': 'A user with that email already exists.'}, status=status.HTTP_409_CONFLICT)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ----- LECTURERS -----
 @api_view(['GET', 'POST'])
