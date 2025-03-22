@@ -8,7 +8,7 @@ export default function ManageRooms() {
   // Fetch rooms from backend
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/rooms");
+      const response = await fetch("http://127.0.0.1:8000/api/rooms");
       const data = await response.json();
       setRooms(data);
     } catch (error) {

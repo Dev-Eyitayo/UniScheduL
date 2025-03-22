@@ -26,7 +26,7 @@ export default function OptimizedSchedule() {
   const runAlgorithm = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/run-algorithm");
+      const res = await fetch("http://127.0.0.1:8000/api/run-algorithm");
       if (!res.ok) throw new Error("Failed to run the algorithm");
 
       const data = await res.json();
