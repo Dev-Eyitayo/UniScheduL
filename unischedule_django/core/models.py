@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 class Lecturer(models.Model):
     name = models.CharField(max_length=100)
@@ -35,3 +36,30 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return f"{self.course.id} - {self.day} {self.start_time}-{self.end_time}"
+
+# --- Institution Model ---
+class Institution(models.Model):
+    name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=100, unique=True)  # e.g. "lcu.ng"
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.domain})"
+
+
+# --- Custom User Model ---
+class User(AbstractUser):
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('staff', 'Staff'),
+    )
+
+    email = models.EmailField(unique=True)
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, null=True, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']  # Only needed for Django admin
+
+    def __str__(self):
+        return f"{self.email} ({self.role})"
