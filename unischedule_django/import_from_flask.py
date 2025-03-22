@@ -9,7 +9,7 @@ django.setup()
 from core.models import Lecturer, Room, Course, TimeSlot
 
 # Connect to the Flask database
-conn = sqlite3.connect("unischedule.db")
+conn = sqlite3.connect("flask_database/unischedule.db")
 cursor = conn.cursor()
 
 # ---- LECTURERS ----
