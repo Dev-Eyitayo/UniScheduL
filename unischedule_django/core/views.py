@@ -13,6 +13,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import IntegrityError
 
 
+User = get_user_model()
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
+
 @api_view(['POST'])
 def signup(request):
     try:
