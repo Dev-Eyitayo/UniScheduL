@@ -1,10 +1,12 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser
 from rest_framework import status
 from .models import Lecturer, Room, Course, TimeSlot
 from .serializers import LecturerSerializer, RoomSerializer, CourseSerializer, TimeSlotSerializer
 from .scheduler import auto_schedule_courses
 from .algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
+from .export_utils import generate_pdf, generate_docx
 
 # ----- LECTURERS -----
 @api_view(['GET', 'POST'])
@@ -230,3 +232,21 @@ def run_algorithm(request):
     }
 
     return Response(result)
+
+@api_view(['POST'])
+def export_file(request):
+    data = request.data
+    file_format = data.get("format", "pdf")
+
+    schedule = data.get("schedule", [])
+    failed = data.get("failed_bookings", [])
+    semester = data.get("semester", "Semester")
+    faculty = data.get("faculty", "Faculty")
+    session = data.get("session", "Session")
+    year = data.get("academic_year", "Year")
+    dept = data.get("department", "Department")
+
+    if file_format == "pdf":
+        return generate_pdf(schedule, failed, semester, year, dept, faculty, session)
+    else:
+        return generate_docx(schedule, failed, semester, year, dept, faculty, session)
