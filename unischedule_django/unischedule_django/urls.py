@@ -20,4 +20,9 @@ urlpatterns = [
     # TimeSlot APIs
     path('api/timeslots', views.timeslots_view),
     path('api/timeslots/<int:pk>', views.timeslot_detail),
+
+    path('api/timetable', views.get_timetable),
+    path('api/run-algorithm', views.run_algorithm),
+    path('api/dashboard-stats', views.get_dashboard_stats),
+    path('api/recent-logs', views.get_recent_logs),
 ]

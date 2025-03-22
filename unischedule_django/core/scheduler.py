@@ -1,4 +1,4 @@
-from algoclass import Room, Course, TimeSlot, Booking
+from .algoclass import Room, Course, TimeSlot, Booking
 
 def times_overlap(start1, end1, start2, end2):
     """
