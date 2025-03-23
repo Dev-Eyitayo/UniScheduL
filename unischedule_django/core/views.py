@@ -54,7 +54,9 @@ def signup(request):
             email=email,
             password=password,
             institution=institution,
-            role='admin'
+            role='admin',
+            is_staff=False,
+            is_superuser=False
         )
 
         tokens = get_tokens_for_user(user)
