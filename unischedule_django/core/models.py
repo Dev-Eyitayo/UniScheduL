@@ -61,5 +61,11 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']  # Only needed for Django admin
 
+    def save(self, *args, **kwargs):
+        if self.role in ['admin', 'staff']:
+            self.is_staff = False
+            self.is_superuser = False
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.email} ({self.role})"
