@@ -193,34 +193,33 @@ const Signup = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {success && (
-        <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center space-y-4"
-        >
-            <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
+      </div>
+      {success && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="bg-gray-800 text-white p-6 rounded-xl shadow-lg text-center space-y-4 max-w-md w-full"
+            >
+            <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-4xl">✅</span>
             </div>
-            </div>
-            <h3 className="text-xl font-semibold text-green-400">
-            Account created successfully!
+            <h3 className="text-xl font-bold text-green-400">
+                Account Created!
             </h3>
             <p className="text-sm text-gray-300">
-            Redirecting to your dashboard...
+                Redirecting to your dashboard...
             </p>
             <button
-            onClick={() => navigate("/admin")}
-            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded"
+                onClick={() => navigate("/admin")}
+                className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded"
             >
-            Go to Dashboard
+                Go to Dashboard
             </button>
-        </motion.div>
+            </motion.div>
+        </div>
         )}
-      </div>
     </div>
   );
 };
