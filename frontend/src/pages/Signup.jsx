@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 const Signup = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     institution_name: "",
@@ -180,9 +183,30 @@ const Signup = () => {
         </AnimatePresence>
 
         {success && (
-          <div className="text-center text-green-400">
-            🎉 Account created! You can now log in.
-          </div>
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center space-y-4"
+        >
+            <div className="flex justify-center">
+            <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
+                <span className="text-4xl">✅</span>
+            </div>
+            </div>
+            <h3 className="text-xl font-semibold text-green-400">
+            Account created successfully!
+            </h3>
+            <p className="text-sm text-gray-300">
+            Redirecting to your dashboard...
+            </p>
+            <button
+            onClick={() => navigate("/admin")}
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded"
+            >
+            Go to Dashboard
+            </button>
+        </motion.div>
         )}
       </div>
     </div>
