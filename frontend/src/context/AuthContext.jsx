@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = ({ tokens, user }, remember = true) => {
+  const login({ tokens: { access, refresh }, user }, remember = true) => {
     setAccess(tokens.access);
     setRefresh(tokens.refresh);
     setUser(user);

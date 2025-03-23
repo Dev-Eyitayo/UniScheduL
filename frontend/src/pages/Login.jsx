@@ -13,26 +13,39 @@ export default function Login() {
 
   const handleLogin = async () => {
     setError("");
-
+  
     try {
       const res = await fetch("http://127.0.0.1:8000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Login failed.");
-
-      login(data, rememberMe); // Store tokens and user
+  
+      if (!res.ok) {
+        throw new Error(data.detail || "Login failed.");
+      }
+  
+      // ✅ Map the data properly for your login()
+      login(
+        {
+          tokens: {
+            access: data.access,
+            refresh: data.refresh,
+          },
+          user: data.user,
+        },
+        rememberMe
+      );
+  
       navigate("/admin");
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
     }
   };
-
+  
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-900 text-white">
       <div className="bg-gray-800 p-6 rounded-lg shadow-md w-96 space-y-4">
