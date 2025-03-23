@@ -1,20 +1,24 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from rest_framework.parsers import JSONParser
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from .models import Lecturer, Room, Course, TimeSlot, Institution
 from .serializers import LecturerSerializer, RoomSerializer, CourseSerializer, TimeSlotSerializer
 from .scheduler import auto_schedule_courses
 from .algoclass import Room as AlgoRoom, Course as AlgoCourse, TimeSlot as AlgoTimeSlot
 from .export_utils import generate_pdf, generate_docx
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import IntegrityError
 
 
 User = get_user_model()
 
+
+# Token generation helper
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -22,7 +26,7 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
-
+# Signup API
 @api_view(['POST'])
 def signup(request):
     try:
@@ -77,7 +81,24 @@ def signup(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Custom Token Serializer
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
 
+        data['user'] = {
+            'email': user.email,
+            'username': user.username,
+            'role': user.role,
+            'institution_id': user.institution.id if user.institution else None,
+            'institution_name': user.institution.name if user.institution else None,
+        }
+
+        return data
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 

@@ -8,6 +8,9 @@ urlpatterns = [
     # Signup
     path('api/signup', views.signup),
 
+    # Login
+    path('api/login', views.CustomTokenObtainPairView.as_view()),
+
     # Lecturer APIs
     path('api/lecturers', views.lecturers_view),
     path('api/lecturers/<int:pk>', views.lecturer_detail),
