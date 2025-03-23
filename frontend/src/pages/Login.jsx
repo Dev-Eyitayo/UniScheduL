@@ -60,15 +60,17 @@ export default function Login() {
           />
         </div>
         <div className="flex items-center justify-between mb-2 text-sm">
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center gap-2">
             <input
-              type="  checkbox"
+              type="checkbox"
               checked={rememberMe}
               onChange={() => setRememberMe(!rememberMe)}
+              className="form-checkbox text-blue-600 rounded"
             />
             <span>Remember Me</span>
           </label>
         </div>
+
 
 
         <button
