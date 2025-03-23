@@ -90,6 +90,11 @@ DATABASES = {
 }
 
 
+ADMIN_SITE_HEADER = "UniScheduL administration"
+ADMIN_SITE_TITLE = "UniScheduL Admin"
+ADMIN_INDEX_TITLE = "Welcome to UniScheduL Admin Panel"
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

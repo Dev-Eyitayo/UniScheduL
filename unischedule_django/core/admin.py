@@ -1,6 +1,13 @@
 from django.contrib import admin
+from django.conf import settings
 from .models import Lecturer, Room, Course, TimeSlot, Institution, User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+
+# Customizing the Django Admin
+admin.site.site_header = getattr(settings, "ADMIN_SITE_HEADER", "Admin")
+admin.site.site_title = getattr(settings, "ADMIN_SITE_TITLE", "Admin")
+admin.site.index_title = getattr(settings, "ADMIN_INDEX_TITLE", "Welcome")
 
 
 class CustomUserAdmin(BaseUserAdmin):
