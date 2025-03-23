@@ -50,6 +50,7 @@ class Institution(models.Model):
 # --- Custom User Model ---
 class User(AbstractUser):
     ROLE_CHOICES = (
+        ('super_admin', 'Super Admin'),
         ('admin', 'Admin'),
         ('staff', 'Staff'),
     )
@@ -62,10 +63,10 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']  # Only needed for Django admin
 
     def save(self, *args, **kwargs):
-        if self.role in ['admin', 'staff']:
+        if self.role != 'super_admin':
             self.is_staff = False
             self.is_superuser = False
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return f"{self.email} ({self.role})"
