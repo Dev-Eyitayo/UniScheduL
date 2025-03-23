@@ -57,18 +57,30 @@ const Signup = () => {
     if (!validateStep()) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Signup failed.");
-      }
-
-      setSuccess(true);
+        const res = await fetch("http://127.0.0.1:8000/api/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(form),
+          });
+          
+          const data = await res.json();
+          
+          if (!res.ok) {
+            throw new Error(data.error || "Signup failed.");
+          }
+          
+          // ✅ Save tokens + user info
+          localStorage.setItem("access", data.tokens.access);
+          localStorage.setItem("refresh", data.tokens.refresh);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          
+          // ✅ Show success message
+          setSuccess(true);
+          
+          // ✅ Redirect to dashboard after short delay
+          setTimeout(() => {
+            navigate("/admin");
+          }, 3000);
     } catch (err) {
       setError(err.message);
     }
