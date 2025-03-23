@@ -1,32 +1,68 @@
 import { useState } from "react";
-import Button from "../components/Button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    setError("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Login failed.");
+
+      login(data); // Store tokens and user
+      navigate("/admin");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold text-center mb-4">Login</h2>
+    <div className="min-h-screen flex justify-center items-center bg-gray-900 text-white">
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-96 space-y-4">
+        <h2 className="text-2xl font-bold text-center">Login</h2>
 
-        <label className="block mb-2">Email</label>
-        <input
-          type="email"
-          className="w-full p-2 border rounded-md mb-4"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {error && <p className="text-red-400 text-center">{error}</p>}
 
-        <label className="block mb-2">Password</label>
-        <input
-          type="password"
-          className="w-full p-2 border rounded-md mb-4"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div>
+          <label className="block mb-1">Email</label>
+          <input
+            type="email"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-        <Button type="primary">Login</Button>
+        <div>
+          <label className="block mb-1">Password</label>
+          <input
+            type="password"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={handleLogin}
+          className="bg-blue-600 hover:bg-blue-700 w-full py-2 rounded"
+        >
+          Login
+        </button>
       </div>
     </div>
   );
