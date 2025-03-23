@@ -52,11 +52,15 @@ export default function AdminDashboard() {
     <div className="p-6">
       <h2 className="text-3xl font-bold mb-4">📊 Dashboard Overview</h2>
       {/* Show Institution name */}
-      {user?.institution_name && (
+      {/* {user?.institution_name && (
         <p className="text-lg text-gray-600 mb-6">
           Institution: <span className="font-semibold text-gray-800">{user.institution_name}</span>
         </p>
-      )}
+        
+      )} */}
+      <p className="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-4 py-1 rounded-full mb-6">
+          {user.institution_name}
+      </p>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
