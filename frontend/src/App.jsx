@@ -4,6 +4,7 @@ import PublicLayout from "./components/PublicLayout"; // NEW
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageRooms from "./pages/admin/ManageRooms";
 import ManageCourses from "./pages/admin/ManageCourses";
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/" element={<PublicLayout> <Home /> </PublicLayout>} />
         <Route path="/dashboard" element={<PublicLayout> <Dashboard /> </PublicLayout>} />
         <Route path="/login" element={<PublicLayout> <Login /> </PublicLayout>} />
+        <Route path="/signup" element={<PublicLayout> <Signup /> </PublicLayout>} />
 
         {/* Admin Routes (Handled by AdminLayout) */}
         <Route path="/admin/*" element={<AdminLayout> <AdminDashboard /> </AdminLayout>} />
