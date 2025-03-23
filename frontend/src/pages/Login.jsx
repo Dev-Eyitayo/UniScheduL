@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -8,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleLogin = async () => {
     setError("");
@@ -23,10 +25,11 @@ export default function Login() {
 
       if (!res.ok) throw new Error(data.error || "Login failed.");
 
-      login(data); // Store tokens and user
+      login(data, rememberMe); // Store tokens and user
       navigate("/admin");
     } catch (err) {
       setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -56,6 +59,17 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        <div className="flex items-center justify-between mb-2 text-sm">
+          <label className="flex items-center space-x-2">
+            <input
+              type="  checkbox"
+              checked={rememberMe}
+              onChange={() => setRememberMe(!rememberMe)}
+            />
+            <span>Remember Me</span>
+          </label>
+        </div>
+
 
         <button
           onClick={handleLogin}

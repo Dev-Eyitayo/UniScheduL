@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import PublicLayout from "./components/PublicLayout"; // NEW
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
+        <Toaster position="top-right" />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout> <Home /> </PublicLayout>} />
