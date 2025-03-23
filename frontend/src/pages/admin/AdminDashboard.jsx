@@ -58,9 +58,15 @@ export default function AdminDashboard() {
         </p>
         
       )} */}
-      <p className="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-4 py-1 rounded-full mb-6">
-          {user.institution_name}
+      <p className="text-lg text-gray-600 mb-6 flex items-center gap-2">
+        🎓
+        <span>
+          <span className="font-medium text-blue-600 capitalize">{user.role}</span>
+          {" "}at{" "}
+          <span className="font-semibold text-gray-800">{user.institution_name}</span>
+        </span>
       </p>
+
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
