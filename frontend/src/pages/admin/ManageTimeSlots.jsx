@@ -19,7 +19,7 @@ export default function ManageTimeSlots() {
 
   // Fetch all time slots
   const fetchTimeSlots = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/timeslots");
+    const res = await fetch("http://127.0.0.1:8000/api/timeslots");
     const data = await res.json();
     setTimeSlots(data);
     setFilteredSlots(data);
@@ -47,8 +47,8 @@ export default function ManageTimeSlots() {
     e.preventDefault();
     const method = isEditing ? "PUT" : "POST";
     const url = isEditing
-      ? `http://127.0.0.1:5000/api/timeslots/${editingId}`
-      : "http://127.0.0.1:5000/api/timeslots";
+      ? `http://127.0.0.1:8000/api/timeslots/${editingId}`
+      : "http://127.0.0.1:8000/api/timeslots";
 
     const res = await fetch(url, {
       method,
@@ -72,7 +72,7 @@ export default function ManageTimeSlots() {
 
   // 📌 Handle Delete Time Slot
   const handleDelete = async (id) => {
-    const res = await fetch(`http://127.0.0.1:5000/api/timeslots/${id}`, { method: "DELETE" });
+    const res = await fetch(`http://127.0.0.1:8000/api/timeslots/${id}`, { method: "DELETE" });
     if (res.ok) {
         await fetchTimeSlots(); // Refresh time slot list after deletion
     } else {
