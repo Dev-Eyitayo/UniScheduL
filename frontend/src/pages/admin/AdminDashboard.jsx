@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"; 
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import {
@@ -14,6 +15,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 export default function AdminDashboard() {
   const [stats, setStats] = useState({});
   const [logs, setLogs] = useState([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -49,6 +51,12 @@ export default function AdminDashboard() {
   return (
     <div className="p-6">
       <h2 className="text-3xl font-bold mb-4">📊 Dashboard Overview</h2>
+      {/* Show Institution name */}
+      {user?.institution_name && (
+        <p className="text-lg text-gray-600 mb-6">
+          Institution: <span className="font-semibold text-gray-800">{user.institution_name}</span>
+        </p>
+      )}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
