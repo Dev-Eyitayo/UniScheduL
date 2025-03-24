@@ -65,14 +65,26 @@ export default function ManageTimeSlots() {
     const url = isEditing
       ? `http://127.0.0.1:8000/api/timeslots/${editingId}`
       : "http://127.0.0.1:8000/api/timeslots";
-
+  
+    const payload = {
+      ...formData,
+      course_id: parseInt(formData.course_id),
+    };
+  
+    console.log("Sending data to backend:", payload);
+  
     try {
       await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          course: formData.course_id,  // this is key! use 'course' not 'course_id'
+          day: formData.day,
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+        }),
       });
-
+  
       setFormData({
         course_id: "",
         day: "Monday",
@@ -82,9 +94,11 @@ export default function ManageTimeSlots() {
       setIsEditing(false);
       fetchTimeSlots();
     } catch (err) {
-      console.error("Error saving time slot:", err);
+      console.error("Error saving time slot:", err.response?.data || err);
     }
   };
+  
+  
 
   const handleEdit = (slot) => {
     setFormData({

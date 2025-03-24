@@ -250,7 +250,7 @@ def timeslots_view(request):
         return Response(enriched_data)
 
     elif request.method == 'POST':
-        course_id = request.data.get("course")
+        course_id = request.data.get("course") or request.data.get("course_id")
         try:
             course = Course.objects.get(id=course_id, institution=request.user.institution)
         except Course.DoesNotExist:
