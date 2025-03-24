@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
+import authFetch  from "../../utils/authFetch"; 
 
 export default function ManageRooms() {
   const [rooms, setRooms] = useState([]);
   const [formData, setFormData] = useState({ id: "", name: "", capacity: "" });
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch rooms from backend
+  const API_BASE_URL = "http://127.0.0.1:8000/api";
+
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/rooms");
-      const data = await response.json();
+      const data = await authFetch(`${API_BASE_URL}/rooms`);
       setRooms(data);
     } catch (error) {
       console.error("Error fetching rooms:", error);
@@ -20,24 +21,25 @@ export default function ManageRooms() {
     fetchRooms();
   }, []);
 
-  // Handle form input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add or Edit Room
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = isEditing ? "PUT" : "POST";
-    const url = isEditing
-      ? `http://127.0.0.1:5000/api/rooms/${formData.id}`
-      : "http://127.0.0.1:5000/api/rooms";
+    const endpoint = isEditing
+      ? `${API_BASE_URL}/rooms/${formData.id}`
+      : `${API_BASE_URL}/rooms`;
 
     try {
-      await fetch(url, {
+      await authFetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formData.name, capacity: formData.capacity }),
+        body: JSON.stringify({
+          name: formData.name,
+          capacity: formData.capacity,
+        }),
       });
 
       setFormData({ id: "", name: "", capacity: "" });
@@ -48,16 +50,14 @@ export default function ManageRooms() {
     }
   };
 
-  // Edit Room
   const handleEdit = (room) => {
     setFormData(room);
     setIsEditing(true);
   };
 
-  // Delete Room
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://127.0.0.1:5000/api/rooms/${id}`, { method: "DELETE" });
+      await authFetch(`${API_BASE_URL}/rooms/${id}`, { method: "DELETE" });
       fetchRooms();
     } catch (error) {
       console.error("Error deleting room:", error);
@@ -68,7 +68,6 @@ export default function ManageRooms() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Manage Rooms</h2>
 
-      {/* Room Form */}
       <form className="mb-6 flex gap-4" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -88,12 +87,14 @@ export default function ManageRooms() {
           onChange={handleChange}
           required
         />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          type="submit"
+        >
           {isEditing ? "Update Room" : "Add Room"}
         </button>
       </form>
 
-      {/* Rooms Table */}
       <table className="w-full border-collapse border">
         <thead>
           <tr className="bg-gray-200">
@@ -110,10 +111,16 @@ export default function ManageRooms() {
               <td className="border p-2">{room.name}</td>
               <td className="border p-2">{room.capacity}</td>
               <td className="border p-2">
-                <button onClick={() => handleEdit(room)} className="bg-yellow-500 text-white px-3 py-1 rounded mr-2">
+                <button
+                  onClick={() => handleEdit(room)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+                >
                   Edit
                 </button>
-                <button onClick={() => handleDelete(room.id)} className="bg-red-500 text-white px-3 py-1 rounded">
+                <button
+                  onClick={() => handleDelete(room.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
                   Delete
                 </button>
               </td>
