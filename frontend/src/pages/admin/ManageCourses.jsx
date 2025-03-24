@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import {authFetch} from "../../util/authFetch";
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState([]);
@@ -21,35 +22,50 @@ export default function ManageCourses() {
   }, []);
 
   const fetchCourses = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/courses");
-    const data = await res.json();
-    setCourses(data);
+    try {
+      const data = await authFetch("http://127.0.0.1:8000/api/courses");
+
+      if (Array.isArray(data)) {
+        setCourses(data);
+      } else {
+        setCourses([]); // fallback to empty array
+      }
+    } catch (err) {
+      console.error("Course fetch error:", err);
+      setCourses([]); // prevent blank page crash
+    }
   };
+  
 
   const fetchLecturers = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/lecturers");
-    const data = await res.json();
-    setLecturers(data);
+    try {
+      const data = await authFetch("http://127.0.0.1:8000/api/lecturers");
+      setLecturers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Lecturer fetch error:", err);
+      setLecturers([]);
+    }
   };
+  
 
   // Handle form change
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  
 
   // Add or Edit Course
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = isEditing ? "PUT" : "POST";
     const url = isEditing
-      ? `http://127.0.0.1:5000/api/courses/${formData.id}`
-      : "http://127.0.0.1:5000/api/courses";
-
-    await fetch(url, {
+      ? `http://127.0.0.1:8000/api/courses/${formData.id}`
+      : "http://127.0.0.1:8000/api/courses";
+  
+    await authFetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
-
+  
     setFormData({
       id: "",
       name: "",
@@ -60,7 +76,7 @@ export default function ManageCourses() {
     setIsEditing(false);
     fetchCourses();
   };
-
+  
   // Edit Course
   const handleEdit = (course) => {
     setFormData(course);
@@ -69,7 +85,9 @@ export default function ManageCourses() {
 
   // Delete Course
   const handleDelete = async (id) => {
-    await fetch(`http://127.0.0.1:5000/api/courses/${id}`, { method: "DELETE" });
+    await authFetch(`http://127.0.0.1:8000/api/courses/${id}`, {
+      method: "DELETE",
+    });
     fetchCourses();
   };
 

@@ -24,17 +24,38 @@ export default function AdminDashboard() {
 
   // Fetch stats for dashboard
   const fetchDashboardStats = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/dashboard-stats");
-    const data = await res.json();
-    setStats(data);
+    const token = localStorage.getItem("access");
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/dashboard-stats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to load stats.");
+      const data = await res.json();
+      setStats(data);
+    } catch (error) {
+      console.error("Dashboard stats error:", error);
+    }
   };
 
   // Fetch recent logs
   const fetchRecentLogs = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/recent-logs");
-    const data = await res.json();
-    setLogs(data);
+    const token = localStorage.getItem("access");
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/recent-logs", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to load logs.");
+      const data = await res.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Recent logs error:", error);
+    }
   };
+  
 
   // 📊 Chart Data
   const barData = {
