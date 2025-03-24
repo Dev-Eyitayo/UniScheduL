@@ -197,11 +197,19 @@ def courses_view(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
+        lecturer_id = request.data.get("lecturer")
+        try:
+            lecturer = Lecturer.objects.get(id=lecturer_id, institution=request.user.institution)
+        except Lecturer.DoesNotExist:
+            return Response({"error": "Lecturer not found or does not belong to your institution."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         serializer = CourseSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(institution=request.user.institution)
             return Response({"message": "Course added successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['PUT', 'DELETE'])
 @permission_classes([IsAuthenticated]) 
@@ -242,6 +250,13 @@ def timeslots_view(request):
         return Response(enriched_data)
 
     elif request.method == 'POST':
+        course_id = request.data.get("course")
+        try:
+            course = Course.objects.get(id=course_id, institution=request.user.institution)
+        except Course.DoesNotExist:
+            return Response({"error": "Course not found or does not belong to your institution."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         serializer = TimeSlotSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(institution=request.user.institution)
