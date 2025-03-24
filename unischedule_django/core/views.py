@@ -5,6 +5,8 @@ from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from .models import Lecturer, Room, Course, TimeSlot, Institution
@@ -115,23 +117,25 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 # ----- LECTURERS -----
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def lecturers_view(request):
     if request.method == 'GET':
-        lecturers = Lecturer.objects.all()
+        lecturers = Lecturer.objects.filter(institution=request.user.institution)
         serializer = LecturerSerializer(lecturers, many=True)
         return Response(serializer.data)
     
     elif request.method == 'POST':
         serializer = LecturerSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(institution=request.user.institution)
             return Response({"message": "Lecturer added successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def lecturer_detail(request, pk):
     try:
-        lecturer = Lecturer.objects.get(pk=pk)
+        lecturer = Lecturer.objects.get(pk=pk, institution=request.user.institution)
     except Lecturer.DoesNotExist:
         return Response({"error": "Lecturer not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -149,23 +153,25 @@ def lecturer_detail(request, pk):
 
 # ----- ROOMS -----
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def rooms_view(request):
     if request.method == 'GET':
-        rooms = Room.objects.all()
+        rooms = Room.objects.filter(institution=request.user.institution)
         serializer = RoomSerializer(rooms, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
         serializer = RoomSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(institution=request.user.institution)
             return Response({"message": "Room added successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def room_detail(request, pk):
     try:
-        room = Room.objects.get(pk=pk)
+        room = Room.objects.get(pk=pk, institution=request.user.institution)
     except Room.DoesNotExist:
         return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -183,23 +189,25 @@ def room_detail(request, pk):
 
 # ----- COURSES -----
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated]) 
 def courses_view(request):
     if request.method == 'GET':
-        courses = Course.objects.all()
+        courses = Course.objects.filter(institution=request.user.institution)
         serializer = CourseSerializer(courses, many=True)
         return Response(serializer.data)
 
     elif request.method == 'POST':
         serializer = CourseSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(institution=request.user.institution)
             return Response({"message": "Course added successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated]) 
 def course_detail(request, pk):
     try:
-        course = Course.objects.get(pk=pk)
+        course = Course.objects.get(pk=pk, institution=request.user.institution)
     except Course.DoesNotExist:
         return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -217,9 +225,10 @@ def course_detail(request, pk):
 
 # ----- TIMESLOTS -----
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated]) 
 def timeslots_view(request):
     if request.method == 'GET':
-        timeslots = TimeSlot.objects.select_related('course__lecturer').all()
+        timeslots = TimeSlot.objects.filter(institution=request.user.institution)
         enriched_data = [{
             "id": ts.id,
             "course_id": ts.course.id,
@@ -235,14 +244,19 @@ def timeslots_view(request):
     elif request.method == 'POST':
         serializer = TimeSlotSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Time slot added successfully!", "timeslot_id": serializer.instance.id}, status=status.HTTP_201_CREATED)
+            serializer.save(institution=request.user.institution)
+            return Response({
+                "message": "Time slot added successfully!",
+                "timeslot_id": serializer.instance.id
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated]) 
 def timeslot_detail(request, pk):
     try:
-        ts = TimeSlot.objects.get(pk=pk)
+        ts = TimeSlot.objects.get(pk=pk, institution=request.user.institution)
     except TimeSlot.DoesNotExist:
         return Response({"error": "Time slot not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -258,12 +272,15 @@ def timeslot_detail(request, pk):
         return Response({"message": "Time slot deleted successfully!"})
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated]) 
 def get_timetable(request):
     """Fetch all scheduled courses organized by days"""
     week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     timetable = {day: [] for day in week_days}
 
-    courses = Course.objects.prefetch_related('time_slots', 'lecturer').all()
+    courses = Course.objects.prefetch_related('time_slots', 'lecturer')\
+    .filter(institution=request.user.institution)
+
 
     for course in courses:
         for slot in course.time_slots.all():
@@ -279,12 +296,14 @@ def get_timetable(request):
     return Response(timetable)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_dashboard_stats(request):
+    inst = request.user.institution
     return Response({
-        "courses": Course.objects.count(),
-        "lecturers": Lecturer.objects.count(),
-        "rooms": Room.objects.count(),
-        "timeslots": TimeSlot.objects.count(),
+        "courses": Course.objects.filter(institution=inst).count(),
+        "lecturers": Lecturer.objects.filter(institution=inst).count(),
+        "rooms": Room.objects.filter(institution=inst).count(),
+        "timeslots": TimeSlot.objects.filter(institution=inst).count(),
     })
 
 @api_view(['GET'])
@@ -298,9 +317,11 @@ def get_recent_logs(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated]) 
 def run_algorithm(request):
-    rooms = Room.objects.all()
-    courses = Course.objects.prefetch_related('time_slots').all()
+    inst = request.user.institution
+    rooms = Room.objects.filter(institution=inst)
+    courses = Course.objects.prefetch_related('time_slots').filter(institution=inst)
 
     # Convert to algo format
     room_list = [AlgoRoom(r.id, r.name, r.capacity) for r in rooms]
@@ -318,7 +339,7 @@ def run_algorithm(request):
     logs = []
     bookings, failed = auto_schedule_courses(course_list, room_list, logs)
 
-    lecturer_lookup = {l.id: l.name for l in Lecturer.objects.all()}
+    lecturer_lookup = {l.id: l.name for l in Lecturer.objects.filter(institution=inst)}
 
     result = {
         "bookings": [
