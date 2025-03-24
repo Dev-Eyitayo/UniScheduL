@@ -1,67 +1,75 @@
-import axios from 'axios';
+import authFetch from "./utils/authFetch";
 
-// Base URL of the Flask API
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-// Fetch all lecturers
+// 🔍 Lecturers
 export const fetchLecturers = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/lecturers`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching lecturers:', error);
-        return [];
-    }
+  try {
+    return await authFetch(`${API_BASE_URL}/lecturers`);
+  } catch (error) {
+    console.error("Error fetching lecturers:", error);
+    return [];
+  }
 };
-// Add a lecturer
+
 export const addLecturer = async (lecturer) => {
-    await axios.post(`${API_BASE_URL}/lecturers`, lecturer);
+  try {
+    return await authFetch(`${API_BASE_URL}/lecturers`, {
+      method: "POST",
+      body: JSON.stringify(lecturer),
+    });
+  } catch (error) {
+    console.error("Error adding lecturer:", error);
+  }
 };
 
-// Update a lecturer
 export const updateLecturer = async (id, lecturer) => {
-    await axios.put(`${API_BASE_URL}/lecturers/${id}`, lecturer);
+  try {
+    return await authFetch(`${API_BASE_URL}/lecturers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(lecturer),
+    });
+  } catch (error) {
+    console.error("Error updating lecturer:", error);
+  }
 };
 
-// Delete a lecturer
 export const deleteLecturer = async (id) => {
-    await axios.delete(`${API_BASE_URL}/lecturers/${id}`);
+  try {
+    return await authFetch(`${API_BASE_URL}/lecturers/${id}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.error("Error deleting lecturer:", error);
+  }
 };
 
-
-
-
-
-
-// Fetch all rooms
+// 🏫 Rooms
 export const fetchRooms = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/rooms`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching rooms:', error);
-        return [];
-    }
+  try {
+    return await authFetch(`${API_BASE_URL}/rooms`);
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    return [];
+  }
 };
 
-// Fetch all courses
+// 📘 Courses
 export const fetchCourses = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/courses`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching courses:', error);
-        return [];
-    }
+  try {
+    return await authFetch(`${API_BASE_URL}/courses`);
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
 };
 
-// Fetch all timeslots
+// 🕒 TimeSlots
 export const fetchTimeSlots = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/timeslots`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching time slots:', error);
-        return [];
-    }
+  try {
+    return await authFetch(`${API_BASE_URL}/timeslots`);
+  } catch (error) {
+    console.error("Error fetching time slots:", error);
+    return [];
+  }
 };

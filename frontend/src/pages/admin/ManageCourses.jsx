@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {authFetch} from "../../util/authFetch";
+import authFetch from "../../utils/authFetch";
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState([]);

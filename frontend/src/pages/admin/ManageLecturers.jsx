@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchLecturers, addLecturer, updateLecturer, deleteLecturer } from "../../api";
 
+
 export default function ManageLecturers() {
     const [lecturers, setLecturers] = useState([]);
     const [newLecturer, setNewLecturer] = useState({ name: "", department: "" });
