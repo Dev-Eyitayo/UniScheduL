@@ -79,6 +79,7 @@ export default function ManageCourses() {
   
   // Edit Course
   const handleEdit = (course) => {
+    course.lecturer_id = course.lecturer;
     setFormData(course);
     setIsEditing(true);
   };
