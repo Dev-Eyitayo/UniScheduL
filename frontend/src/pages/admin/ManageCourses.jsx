@@ -174,7 +174,7 @@ export default function ManageCourses() {
               <td className="border px-4 py-2">{course.level}</td>
               <td className="border px-4 py-2">{course.num_students}</td>
               <td className="border px-4 py-2">
-                {lecturers.find((l) => l.id === course.lecturer_id)?.name || "N/A"}
+                {lecturers.find(l => l.id === course.lecturer)?.name || "N/A"}
               </td>
               <td className="border px-4 py-2">
                 <button

@@ -197,7 +197,7 @@ def courses_view(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        lecturer_id = request.data.get("lecturer")
+        lecturer_id = request.data.get("lecturer") or request.data.get("lecturer_id")
         try:
             lecturer = Lecturer.objects.get(id=lecturer_id, institution=request.user.institution)
         except Lecturer.DoesNotExist:
