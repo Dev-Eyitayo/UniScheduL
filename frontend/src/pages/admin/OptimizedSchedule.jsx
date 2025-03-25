@@ -298,14 +298,15 @@ import React, { useState } from "react";
 import axios from "axios";
 import { ClipLoader } from "react-spinners"; // Import spinner
 import infinityGif from '../../assets/infinity.gif';
+import authFetch from "../../utils/authFetch";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const HOURS = ["08:00","09:00","10:00","11:00","12:00",
               "13:00","14:00","15:00","16:00","17:00"];
 
 // Predefine faculties & sessions
-const FACULTIES = ["Science", "Engineering", "Arts", "Social Sciences", "Education"];
-const SESSIONS = ["2024/2025", "2025/2026", "2026/2027", "2027/2028"];
+const FACULTIES = ["Natural and Applied Science", "Engineering", "Arts", "Education"];
+const SESSIONS = ["2024/2025", "2025/2026", "2026/2027", "2027/2028", "2028/2029"];
 
 export default function OptimizedSchedule() {
   const [logs, setLogs] = useState([]);
@@ -344,10 +345,7 @@ export default function OptimizedSchedule() {
     const startTime = Date.now(); // Record the start time
   
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/run-algorithm");
-      if (!res.ok) throw new Error("Failed to run the algorithm");
-  
-      const data = await res.json();
+      const data = await authFetch("http://127.0.0.1:8000/api/run-algorithm");
   
       // Ensure at least 15 seconds before updating the state
       const elapsedTime = Date.now() - startTime;
