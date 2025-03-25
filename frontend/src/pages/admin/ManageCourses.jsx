@@ -61,11 +61,16 @@ export default function ManageCourses() {
       ? `http://127.0.0.1:8000/api/courses/${formData.id}`
       : "http://127.0.0.1:8000/api/courses";
   
+    const payload = {
+      ...formData,
+      lecturer: formData.lecturer_id,
+    };
+    
     await authFetch(url, {
       method,
-      body: JSON.stringify(formData),
+      body: JSON.stringify(payload),
     });
-  
+
     setFormData({
       id: "",
       name: "",
