@@ -15,7 +15,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 export default function AdminDashboard() {
   const [stats, setStats] = useState({});
   const [logs, setLogs] = useState([]);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -31,6 +31,12 @@ export default function AdminDashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
+  
+      if (res.status === 401) {
+        logout(); // Force logout if token is invalid
+        return;
+      }
+  
       if (!res.ok) throw new Error("Failed to load stats.");
       const data = await res.json();
       setStats(data);
@@ -38,7 +44,7 @@ export default function AdminDashboard() {
       console.error("Dashboard stats error:", error);
     }
   };
-
+  
   // Fetch recent logs
   const fetchRecentLogs = async () => {
     const token = localStorage.getItem("access");
@@ -48,13 +54,19 @@ export default function AdminDashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
+  
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+  
       if (!res.ok) throw new Error("Failed to load logs.");
       const data = await res.json();
       setLogs(data);
     } catch (error) {
       console.error("Recent logs error:", error);
     }
-  };
+  };  
   
 
   // 📊 Chart Data
