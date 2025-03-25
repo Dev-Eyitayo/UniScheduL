@@ -1,11 +1,11 @@
+import docx
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-import docx
-from django.http import FileResponse
 from reportlab.lib.units import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from django.http import FileResponse
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"]
@@ -41,7 +41,7 @@ def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
         for hour in HOURS:
             booked = [
                 Paragraph(
-                    f"<b>{b['course_id']}</b><br/>{b['lecturer']}<br/><i>Room: {b['room']}</i>",
+                    f"<b>{b['course_id']}</b><br/>{b['lecturer']}<br/><i>Room: {b['room']}</i>\n",
                     small_style
                 )
                 for b in schedule if b['day'] == day and hour >= b['start_time'] and hour < b['end_time']
