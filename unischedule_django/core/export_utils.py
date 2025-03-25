@@ -19,7 +19,7 @@ HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"
 
 from reportlab.lib.styles import ParagraphStyle
 
-def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
+def generate_pdf(schedule, failed, semester, faculty, session, institution):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(letter),
                             leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
@@ -41,9 +41,9 @@ def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
     leading=18,
     alignment=TA_CENTER,
     spaceAfter=6,
-)
-
-    institution_name = "LEAD CITY UNIVERSITY"  # Or pass this dynamically if needed
+    )
+    print(institution)
+    institution_name = institution.upper()  # Or pass this dynamically if needed
 
     story.append(Paragraph(f"<b>{institution_name}</b>", header_style))
     story.append(Paragraph(f"{session} Academic Session", header_style))
@@ -158,4 +158,3 @@ def generate_docx(schedule, failed, semester, year, dept, faculty, session):
     document.save(buffer)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="Optimized_Schedule.docx")
-

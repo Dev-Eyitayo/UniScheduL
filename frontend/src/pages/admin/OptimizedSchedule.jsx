@@ -77,47 +77,50 @@ export default function OptimizedSchedule() {
 
   // 3) Generate file with chosen format
   const generateFile = async (format) => {
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/export-file",
-        {
-          format,
-          // existing data
-          semester: "Fall 2025",
-          academic_year: "2025/2026",
-          department: "Physics",
-          schedule,
-          failed_bookings: failedBookings,
-          // new fields from the dropdowns
-          faculty,
-          session: academicSession,
+  try {
+    const token = localStorage.getItem("access") || sessionStorage.getItem("access");
+
+    const response = await axios.post(
+      "http://127.0.0.1:8000/api/export-file",
+      {
+        format,
+        semester: "Fall 2025",
+        academic_year: "2025/2026",
+        department: "Physics",
+        schedule,
+        failed_bookings: failedBookings,
+        faculty,
+        session: academicSession,
+      },
+      {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        { responseType: "blob" }
-      );
+      }
+    );
 
-      let fileType =
-        format === "pdf"
-          ? "application/pdf"
-          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      let fileName =
-        format === "pdf"
-          ? "Optimized_Schedule.pdf"
-          : "Optimized_Schedule.docx";
+    const fileType =
+      format === "pdf"
+        ? "application/pdf"
+        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const fileName =
+      format === "pdf" ? "Optimized_Schedule.pdf" : "Optimized_Schedule.docx";
 
-      const blob = new Blob([response.data], { type: fileType });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error generating file:", error);
-    } finally {
-      setShowExportDropdown(false);
-    }
-  };
+    const blob = new Blob([response.data], { type: fileType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("Error generating file:", error);
+  } finally {
+    setShowExportDropdown(false);
+  }
+};  
 
   // Helper: check if an hour is within [start, end)
   const isWithinTimeSlot = (hour, start, end) => {

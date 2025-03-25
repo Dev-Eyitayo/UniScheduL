@@ -375,6 +375,7 @@ def run_algorithm(request):
     return Response(result)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def export_file(request):
     data = request.data
     file_format = data.get("format", "pdf")
@@ -386,8 +387,9 @@ def export_file(request):
     session = data.get("session", "Session")
     year = data.get("academic_year", "Year")
     dept = data.get("department", "Department")
+    institution_name = request.user.institution.name
 
     if file_format == "pdf":
-        return generate_pdf(schedule, failed, semester, year, dept, faculty, session)
+        return generate_pdf(schedule, failed, semester, faculty, session, institution_name)
     else:
         return generate_docx(schedule, failed, semester, year, dept, faculty, session)
