@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import authFetch from "../../utils/authFetch";
 
 export default function WeeklyTimetable() {
   const [timeSlots, setTimeSlots] = useState([]);
@@ -11,12 +12,16 @@ export default function WeeklyTimetable() {
   useEffect(() => {
     fetchTimetable();
   }, []);
-
+  
   const fetchTimetable = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/timeslots");
-    const data = await res.json();
-    setTimeSlots(data);
+    try {
+      const data = await authFetch("http://127.0.0.1:8000/api/timeslots");
+      setTimeSlots(data);
+    } catch (err) {
+      console.error("Error loading timetable:", err);
+    }
   };
+  
 
   const isWithinTimeSlot = (hour, start, end) => {
     const hourNum = parseInt(hour.split(":")[0], 10);
