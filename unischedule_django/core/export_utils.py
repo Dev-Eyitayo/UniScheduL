@@ -1,11 +1,18 @@
-import docx
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.styles import ParagraphStyle
 from django.http import FileResponse
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.oxml.ns import qn
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"]
@@ -28,10 +35,20 @@ def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
 
     story = []
 
-    title = Paragraph(f"<b>{dept}, {faculty} - {semester} ({year})<br/>{session}</b>", styles["Title"])
-    story.append(title)
-    story.append(Spacer(1, 12))
+    header_style = ParagraphStyle(
+    name="Header",
+    fontSize=14,
+    leading=18,
+    alignment=TA_CENTER,
+    spaceAfter=6,
+)
 
+    institution_name = "LEAD CITY UNIVERSITY"  # Or pass this dynamically if needed
+
+    story.append(Paragraph(f"<b>{institution_name}</b>", header_style))
+    story.append(Paragraph(f"{session} Academic Session", header_style))
+    story.append(Paragraph(f"Faculty of {faculty} – General Timetable", header_style))
+    story.append(Spacer(1, 12))
     # Table header
     table_data = [["Days"] + HOURS]
 
@@ -78,31 +95,67 @@ def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
     return FileResponse(buffer, as_attachment=True, filename="Optimized_Schedule.pdf")
 
 def generate_docx(schedule, failed, semester, year, dept, faculty, session):
-    doc = docx.Document()
-    doc.add_heading(f"{dept}, {faculty} - {semester} ({year}) / {session}", 0)
+    document = Document()
+    style = document.styles['Normal']
+    font = style.font
+    font.name = 'Arial'
+    font.size = Pt(8)
 
-    table = doc.add_table(rows=len(DAYS)+1, cols=len(HOURS)+1)
-    table.style = 'Table Grid'
+    # Add title
+    title = f"{dept}, {faculty} - {semester} ({year})"
+    subtitle = f"{session}"
+    document.add_heading(title, level=1).alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    document.add_paragraph(subtitle).alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    document.add_paragraph()
 
-    table.rows[0].cells[0].text = "Days"
+    # Create table
+    num_cols = len(HOURS) + 1
+    table = document.add_table(rows=len(DAYS) + 1, cols=num_cols)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = False
+
+    # Set uniform width
+    col_width = Inches(0.9)  # fit all columns nicely
+    for row in table.rows:
+        for cell in row.cells:
+            cell.width = col_width
+
+    # Header row
+    table.cell(0, 0).text = "Days"
     for i, hour in enumerate(HOURS):
-        table.rows[0].cells[i+1].text = hour
+        table.cell(0, i + 1).text = hour
 
-    for r, day in enumerate(DAYS, start=1):
-        table.cell(r, 0).text = day
-        for c, hour in enumerate(HOURS, start=1):
-            found = [
+    # Table content
+    for row_idx, day in enumerate(DAYS):
+        table.cell(row_idx + 1, 0).text = day
+        for col_idx, hour in enumerate(HOURS):
+            cell = table.cell(row_idx + 1, col_idx + 1)
+            entries = [
                 f"{b['course_id']} - {b['course_name']}\n{b['lecturer']}\nRoom: {b['room']}"
                 for b in schedule if b['day'] == day and hour >= b['start_time'] and hour < b['end_time']
             ]
-            table.cell(r, c).text = "\n\n".join(found)
+            cell.text = "\n\n".join(entries) if entries else ""
 
+    # Format cells: shrink padding & wrap text
+    for row in table.rows:
+        for cell in row.cells:
+            for paragraph in cell.paragraphs:
+                paragraph.paragraph_format.space_after = Pt(2)
+                paragraph.paragraph_format.line_spacing = 1.0
+                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+                run = paragraph.runs
+                if run:
+                    run[0].font.size = Pt(8)
+
+    # Failed bookings
     if failed:
-        doc.add_heading("Failed Scheduling Attempts:", level=2)
+        document.add_page_break()
+        document.add_heading("Failed Scheduling Attempts:", level=2)
         for f in failed:
-            doc.add_paragraph(f"❌ {f}", style='List Bullet')
+            document.add_paragraph(f"❌ {f}")
 
     buffer = BytesIO()
-    doc.save(buffer)
+    document.save(buffer)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="Optimized_Schedule.docx")
+
