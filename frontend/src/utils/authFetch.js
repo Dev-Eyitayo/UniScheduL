@@ -1,4 +1,7 @@
 import axios from "axios";
+// import { logout } from "../context/AuthContext"; // Import the logout function from the AuthContext
+import { getGlobalLogout } from "../context/AuthContext";
+
 
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
@@ -27,7 +30,9 @@ const refreshToken = async () => {
 const authFetch = async (url, options = {}) => {
   const token = getToken();
   if (!token) {
-    window.location.href = "/login";
+    // window.location.href = "/login";
+    const logout = getGlobalLogout();
+    logout?.();
     return;
   }
 

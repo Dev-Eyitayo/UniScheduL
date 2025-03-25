@@ -2,8 +2,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-
 const AuthContext = createContext();
+let globalLogout = () => {};
+
+export const setGlobalLogout = (fn) => {
+  globalLogout = fn;
+};
+
+export const getGlobalLogout = () => globalLogout;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() =>
@@ -12,11 +18,35 @@ export const AuthProvider = ({ children }) => {
   const [access, setAccess] = useState(localStorage.getItem("access"));
   const [refresh, setRefresh] = useState(localStorage.getItem("refresh"));
   const navigate = useNavigate();
+
+  const logout = () => {
+    setAccess(null);
+    setRefresh(null);
+    setUser(null);
+    localStorage.clear();
+    sessionStorage.clear();
+    toast("Logged out.", { icon: "👋" });
+    navigate("/login");
+  };
+
   useEffect(() => {
-    const token = access || localStorage.getItem("access") || sessionStorage.getItem("access");
-  
+    setGlobalLogout(logout);
+  }, [logout]);
+
+  useEffect(() => {
+    const token = access || localStorage.getItem("access");
     if (!token) {
-      logout(); // force logout if nothing exists
+      logout();
+      return;
+    }
+
+    const [, payload] = token.split(".");
+    if (payload) {
+      const decoded = JSON.parse(atob(payload));
+      const exp = decoded.exp * 1000;
+      if (Date.now() > exp) {
+        logout();
+      }
     }
   }, []);
 
@@ -24,27 +54,11 @@ export const AuthProvider = ({ children }) => {
     setAccess(tokens.access);
     setRefresh(tokens.refresh);
     setUser(user);
-  
-    if (remember) {
-      localStorage.setItem("access", tokens.access);
-      localStorage.setItem("refresh", tokens.refresh);
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      sessionStorage.setItem("access", tokens.access);
-      sessionStorage.setItem("refresh", tokens.refresh);
-      sessionStorage.setItem("user", JSON.stringify(user));
-    }
-    toast.success("Welcome back!");
-  };
-  
 
-  const logout = () => {
-    setAccess(null);
-    setRefresh(null);
-    setUser(null);
-    localStorage.clear();
-    toast("Logged out successfully.", { icon: "👋" });
-    navigate("/login");
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem("access", tokens.access);
+    storage.setItem("refresh", tokens.refresh);
+    storage.setItem("user", JSON.stringify(user));
   };
 
   const isAuthenticated = !!access;
