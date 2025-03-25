@@ -19,15 +19,27 @@ export const AuthProvider = ({ children }) => {
   const [refresh, setRefresh] = useState(localStorage.getItem("refresh"));
   const navigate = useNavigate();
 
-  const logout = () => {
-    setAccess(null);
-    setRefresh(null);
-    setUser(null);
-    localStorage.clear();
-    sessionStorage.clear();
-    toast("Logged out.", { icon: "👋" });
-    navigate("/login");
-  };
+  const logout = (() => {
+    let hasLoggedOut = false;
+  
+    return () => {
+      if (hasLoggedOut) return; // Prevent duplicate logout logic
+  
+      hasLoggedOut = true;
+      setAccess(null);
+      setRefresh(null);
+      setUser(null);
+      localStorage.clear();
+      sessionStorage.clear();
+      toast("Logged out.", { icon: "👋" });
+      navigate("/login");
+  
+      // Optional: reset after delay (if user logs back in)
+      setTimeout(() => {
+        hasLoggedOut = false;
+      }, 2000);
+    };
+  })();
 
   useEffect(() => {
     setGlobalLogout(logout);
