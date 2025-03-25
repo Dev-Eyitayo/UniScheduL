@@ -5,6 +5,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import docx
 from django.http import FileResponse
+from reportlab.lib.units import inch
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"]
@@ -30,17 +31,22 @@ def generate_pdf(schedule, failed, semester, year, dept, faculty, session):
             row.append("\n\n".join(booked) if booked else "")
         table_data.append(row)
 
-    tbl = Table(table_data, repeatRows=1)
+    # Define fixed column widths: first column for days, then equally sized time slots
+    col_widths = [1.0 * inch] + [0.85 * inch] * len(HOURS)
+
+    tbl = Table(table_data, repeatRows=1, colWidths=col_widths)
     tbl.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        # ('FONTSIZE', (0, 0), (-1, 0), 11),
         ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTSIZE', (0, 1), (-1, -1), 6),
+        ('FONTSIZE', (0, 1), (-1, -1), 5.5),
+        ('LEADING', (0, 1), (-1, -1), 6),  # helps line spacing
     ]))
     story.append(tbl)
 
