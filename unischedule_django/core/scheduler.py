@@ -129,7 +129,13 @@ def auto_schedule_courses(courses, rooms, changes_logs):
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
 
                 if alt_room and alt_timeslot:
-                    changes_logs.append(f"⚠️ {course.name} originally planned on {timeslot.day} {timeslot.start_time}-{timeslot.end_time} has moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to Lecturer conflict")
+                    changes_logs.append(
+                            f"""⚠️ {course.name} ({course.course_id})\n
+                               ⏱ Originally Scheduled: {timeslot.day}, {timeslot.start_time}–{timeslot.end_time}\n
+                               🔁 Rescheduled to: {alt_timeslot.day}, {alt_timeslot.start_time}–{alt_timeslot.end_time}\n
+                               📍 Reason: Lecturer conflict\n
+                               """
+                            )
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,
@@ -161,7 +167,7 @@ def auto_schedule_courses(courses, rooms, changes_logs):
                 alt_room, alt_timeslot = find_next_available_time_slot(course, rooms, bookings, timeslot)
 
                 if alt_room and alt_timeslot:
-                    changes_logs.append(f"⚠️ {course.name} moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
+                    changes_logs.append(f"⚠️ {course.course_id}({course.name}) moved to {alt_timeslot.day} {alt_timeslot.start_time}-{alt_timeslot.end_time} due to {reason}")
                     new_booking = Booking(
                         booking_id=booking_id_counter,
                         room=alt_room,

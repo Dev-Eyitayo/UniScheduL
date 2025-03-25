@@ -19,13 +19,48 @@ HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"
 
 from reportlab.lib.styles import ParagraphStyle
 
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import PageTemplate, Frame
+from io import BytesIO
+from django.http import FileResponse
+import os
+
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+HOURS = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
+
+# Add this watermark function
+def draw_watermark(canvas, doc):
+    icon_path = os.path.join("core", "assets", "icon.png")  # adjust path if needed
+
+    x, y = 40, 20  # bottom-left position
+    icon_size = 25
+
+    if os.path.exists(icon_path):
+        canvas.drawImage(icon_path, x, y, width=icon_size, height=icon_size, mask='auto')
+
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(colors.grey)
+    canvas.drawString(x + icon_size + 5, y + 8, "Powered by UniScheduL – https://unischedul.com")
+
+
 def generate_pdf(schedule, failed, semester, faculty, session, institution):
     buffer = BytesIO()
+
+    # Setup page with watermark via custom PageTemplate
     doc = SimpleDocTemplate(buffer, pagesize=landscape(letter),
                             leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
+
+    frame = Frame(doc.leftMargin, doc.bottomMargin,
+                  doc.width, doc.height, id='normal')
+    doc.addPageTemplates([PageTemplate(id='WithWatermark', frames=frame, onPage=draw_watermark)])
+
     styles = getSampleStyleSheet()
-    
-    # Use smaller body style for better wrapping
     small_style = ParagraphStyle(
         name='SmallCell',
         fontSize=5.5,
@@ -33,32 +68,28 @@ def generate_pdf(schedule, failed, semester, faculty, session, institution):
         spaceAfter=0,
     )
 
-    story = []
-
     header_style = ParagraphStyle(
-    name="Header",
-    fontSize=14,
-    leading=18,
-    alignment=TA_CENTER,
-    spaceAfter=6,
+        name="Header",
+        fontSize=14,
+        leading=18,
+        alignment=TA_CENTER,
+        spaceAfter=6,
     )
-    print(institution)
-    institution_name = institution.upper()  # Or pass this dynamically if needed
 
-    story.append(Paragraph(f"<b>{institution_name}</b>", header_style))
+    story = []
+    story.append(Paragraph(f"<b>{institution.upper()}</b>", header_style))
     story.append(Paragraph(f"{session} Academic Session", header_style))
     story.append(Paragraph(f"Faculty of {faculty} – General Timetable", header_style))
     story.append(Spacer(1, 12))
-    # Table header
+
     table_data = [["Days"] + HOURS]
 
-    # Table body rows
     for day in DAYS:
         row = [Paragraph(day, small_style)]
         for hour in HOURS:
             booked = [
                 Paragraph(
-                    f"<b>{b['course_id']}</b><br/>{b['lecturer']}<br/><i>Room: {b['room']}</i>\n",
+                    f"<b>{b['course_id']}</b><br/>{b['lecturer']}<br/><i>Room: {b['room']}</i>",
                     small_style
                 )
                 for b in schedule if b['day'] == day and hour >= b['start_time'] and hour < b['end_time']
@@ -66,10 +97,9 @@ def generate_pdf(schedule, failed, semester, faculty, session, institution):
             row.append(booked if booked else "")
         table_data.append(row)
 
-    # Adjust column widths to squeeze 11 columns to one page
     col_widths = [0.9 * inch] + [0.82 * inch] * len(HOURS)
-
     tbl = Table(table_data, repeatRows=1, colWidths=col_widths)
+
     tbl.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkgray),
@@ -82,6 +112,7 @@ def generate_pdf(schedule, failed, semester, faculty, session, institution):
         ('TOPPADDING', (0, 0), (-1, -1), 2),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
+
     story.append(tbl)
 
     if failed:
