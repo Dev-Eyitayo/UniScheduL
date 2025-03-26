@@ -123,7 +123,7 @@ def generate_pdf(schedule, failed, semester, faculty, session, institution):
 
     doc.build(story)
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename="Optimized_Schedule.pdf")
+    return FileResponse(buffer, as_attachment=True, filename=f"{institution}_Optimized_Schedule_{faculty}_for_{session}.pdf")
 
 def generate_docx(schedule, failed, semester, year, dept, faculty, session):
     document = Document()

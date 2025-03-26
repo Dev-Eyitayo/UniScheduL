@@ -44,6 +44,45 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     setGlobalLogout(logout);
   }, [logout]);
+  
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      const token = access || localStorage.getItem("access");
+  
+      if (token) {
+        const [, payload] = token.split(".");
+        if (payload) {
+          const decoded = JSON.parse(atob(payload));
+          const exp = decoded.exp * 1000;
+          const timeLeft = exp - Date.now();
+  
+          // Refresh token if it's about to expire in the next 1 minute
+          if (timeLeft < 60 * 1000) {
+            try {
+              const refresh =
+                localStorage.getItem("refresh") || sessionStorage.getItem("refresh");
+              const res = await fetch("http://127.0.0.1:8000/api/token/refresh", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh }),
+              });
+              const data = await res.json();
+              if (data.access) {
+                localStorage.setItem("access", data.access);
+                setAccess(data.access);
+              }
+            } catch (err) {
+              console.error("Token refresh failed:", err);
+              logout();
+            }
+          }
+        }
+      }
+    }, 60 * 1000); // check every minute
+  
+    return () => clearInterval(refreshInterval);
+  }, [access, logout]);
+  
 
   useEffect(() => {
     const token = access || localStorage.getItem("access");
