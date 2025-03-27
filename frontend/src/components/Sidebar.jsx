@@ -17,7 +17,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         <nav className="flex-1 px-2 py-4">
           <SidebarItem icon={<HomeIcon className="w-6 h-6" />} text="Dashboard" to="/admin" isOpen={isOpen} />
           <SidebarItem icon={<BookOpenIcon className="w-6 h-6" />} text="Manage Courses" to="/admin/courses" isOpen={isOpen} />
-          <SidebarItem icon={<BuildingLibraryIcon className="w-6 h-6" />} text="Manage Rooms" to="/admin/rooms" isOpen={isOpen} />
+          <SidebarItem icon={<BuildingLibraryIcon className="w-6 h-6" />} text="Manage Lecture Rooms" to="/admin/rooms" isOpen={isOpen} />
           <SidebarItem icon={<ClockIcon className="w-6 h-6" />} text="Manage Time Slots" to="/admin/timeslots" isOpen={isOpen} />
           <SidebarItem icon={<UserIcon className="w-6 h-6" />} text="Manage Lecturers" to="/admin/lecturers" isOpen={isOpen} />
           <SidebarItem icon={<CalendarIcon className="w-6 h-6" />} text="View Timetable" to="/admin/timetable" isOpen={isOpen} />

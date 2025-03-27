@@ -55,7 +55,7 @@ export default function ManageLecturers() {
                     value={newLecturer.department}
                     onChange={(e) => setNewLecturer({ ...newLecturer, department: e.target.value })}
                 />
-                <button onClick={handleAddLecturer} className="bg-green-500 text-white px-3 py-1">Add</button>
+                <button onClick={handleAddLecturer} className="bg-green-500 text-white px-3 w-[100px] py-1">Add</button>
             </div>
 
             {/* Lecturer Table */}
