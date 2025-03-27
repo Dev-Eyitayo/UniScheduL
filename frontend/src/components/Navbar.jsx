@@ -22,7 +22,7 @@ export default function Navbar({ toggleSidebar }) {
 
         <Link to="/" className="flex items-center space-x-2">
           <img src={Logo} alt="Logo" className="h-8 w-auto" />
-          <span className="hidden md:inline-block text-xl font-semibold">UniScheduL</span>
+          <span className="hidden md:inline-block text-xl font-semibold">UniScheduL💫 </span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
