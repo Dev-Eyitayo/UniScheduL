@@ -53,7 +53,7 @@ export default function Login() {
 
   return (
     <div className='min-h-screen flex justify-center items-center bg-gray-900 text-white'>
-      <div className='bg-gray-800 m-2 p-6 rounded-lg shadow-md w-96 space-y-4'>
+      <div className='bg-gray-800 m-4 p-6 rounded-lg shadow-md w-96 space-y-4'>
         <h2 className='text-2xl font-bold text-center'>Login</h2>
 
         {error && <p className='text-red-400 text-center'>{error}</p>}
