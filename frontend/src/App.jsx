@@ -16,22 +16,56 @@ import ManageLecturers from "./pages/admin/ManageLecturers";
 import WeeklyTimetable from "./pages/admin/WeeklyTimetable";
 import OptimizedSchedule from "./pages/admin/OptimizedSchedule";
 import GeneratePDF from "./pages/admin/GeneratePDF";
+import Timetable from "./pages/Timetable";
+import Test from "./pages/Test";
 
 export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <Toaster position="top-right" />
+        <Toaster position='top-right' />
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<PublicLayout> <Home /> </PublicLayout>} />
-          <Route path="/dashboard" element={<PublicLayout> <Dashboard /> </PublicLayout>} />
-          <Route path="/login" element={<PublicLayout> <Login /> </PublicLayout>} />
-          <Route path="/signup" element={<PublicLayout> <Signup /> </PublicLayout>} />
+          <Route
+            path='/'
+            element={
+              <PublicLayout>
+                {" "}
+                <Home />{" "}
+              </PublicLayout>
+            }
+          />
+          <Route
+            path='/dashboard'
+            element={
+              <PublicLayout>
+                {" "}
+                <Dashboard />{" "}
+              </PublicLayout>
+            }
+          />
+          <Route
+            path='/login'
+            element={
+              <PublicLayout>
+                {" "}
+                <Login />{" "}
+              </PublicLayout>
+            }
+          />
+          <Route
+            path='/signup'
+            element={
+              <PublicLayout>
+                {" "}
+                <Signup />{" "}
+              </PublicLayout>
+            }
+          />
 
           {/* Admin Routes (Handled by AdminLayout) */}
           <Route
-            path="/admin"
+            path='/admin'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -42,7 +76,7 @@ export default function App() {
           />
 
           <Route
-            path="/admin/rooms"
+            path='/admin/rooms'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -53,7 +87,7 @@ export default function App() {
           />
 
           <Route
-            path="/admin/courses"
+            path='/admin/courses'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -64,7 +98,7 @@ export default function App() {
           />
 
           <Route
-            path="/admin/lecturers"
+            path='/admin/lecturers'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -75,7 +109,7 @@ export default function App() {
           />
 
           <Route
-            path="/admin/timeslots"
+            path='/admin/timeslots'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -86,7 +120,7 @@ export default function App() {
           />
 
           <Route
-            path="/admin/timetable"
+            path='/admin/timetable'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -97,7 +131,7 @@ export default function App() {
           />
 
           <Route
-            path="/optimized-timetable"
+            path='/optimized-timetable'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -108,7 +142,7 @@ export default function App() {
           />
 
           <Route
-            path="/generate-pdf"
+            path='/generate-pdf'
             element={
               <ProtectedRoute>
                 <AdminLayout>
@@ -117,9 +151,28 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path='/timetable'
+            element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Timetable />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/test'
+            element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Test />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
-
     </Router>
   );
 }
