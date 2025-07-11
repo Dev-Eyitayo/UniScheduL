@@ -21,6 +21,7 @@ const dummyCourses = {
   "200L": [
     { id: "csc201", title: "Data Structures" },
     { id: "mth201", title: "Linear Algebra" },
+    { id: "mth202", title: "Idiomatic Algebra" },
   ],
   "300L": [
     { id: "csc301", title: "Operating Systems" },
